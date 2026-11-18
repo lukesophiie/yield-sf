@@ -1,0 +1,248 @@
+<title>Sidewalk Robot Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: questions on the left like a field form, a sticky verdict slip on the right; curb-paint yellow marks the one thing to act on */
+:root{
+  --bg:#eceef1; --panel:#fff; --ink:#151a20; --dim:#566070; --line:#cfd4dc;
+  --mark:#f5bd0a; --mark-ink:#151a20; --link:#0b4f8a;
+  --ok:#17703f; --ok-bg:#dff1e6; --bad:#b3241c; --bad-bg:#fbe3e0; --unk:#6b5200; --unk-bg:#fcf0c4;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12161b; --panel:#1b2128; --ink:#e8ecf1; --dim:#9aa5b3; --line:#303843;
+  --mark:#f5bd0a; --mark-ink:#151a20; --link:#7fbdf0;
+  --ok:#6dd69b; --ok-bg:#143021; --bad:#ff8d82; --bad-bg:#3a1917; --unk:#ecc95e; --unk-bg:#332a0b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161b; --panel:#1b2128; --ink:#e8ecf1; --dim:#9aa5b3; --line:#303843;
+  --mark:#f5bd0a; --mark-ink:#151a20; --link:#7fbdf0;
+  --ok:#6dd69b; --ok-bg:#143021; --bad:#ff8d82; --bad-bg:#3a1917; --unk:#ecc95e; --unk-bg:#332a0b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:26px}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2rem,5.5vw,3.1rem);font-weight:700;letter-spacing:-.02em}
+h1 mark{background:var(--mark);color:var(--mark-ink);padding:0 .15em}
+h2{font-size:1.3rem;font-weight:700}
+h3{font-size:.78rem;font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+p{margin:0}
+a{color:var(--link)}
+.kicker{font:500 .75rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.lede{max-width:64ch;color:var(--dim);font-size:1.02rem}
+header{display:grid;gap:12px}
+.facts{display:flex;flex-wrap:wrap;gap:8px 28px;border-top:1px solid var(--line);padding-top:14px;font-variant-numeric:tabular-nums}
+.facts div{display:grid}
+.facts b{font:700 1.7rem var(--display);line-height:1}
+.facts span{font-size:.8rem;color:var(--dim)}
+.modes{display:inline-flex;border:1px solid var(--ink);border-radius:8px;overflow:hidden;justify-self:start}
+.modes button{font:600 .92rem var(--body);padding:9px 16px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+.cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:820px){.cols{grid-template-columns:minmax(0,1fr)}}
+.form{display:grid;gap:8px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{font:500 .72rem var(--mono);text-transform:uppercase;letter-spacing:.06em;background:var(--unk-bg);color:var(--unk);padding:3px 8px;border-radius:4px}
+.f{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.f .lab{font-weight:600;min-width:0}
+.f .help{font-size:.84rem;color:var(--dim);font-weight:400}
+.f select,.f input[type=number]{font:400 .9rem var(--body);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);max-width:100%}
+.f input[type=number]{width:90px}
+@media (max-width:520px){.f{grid-template-columns:minmax(0,1fr)}.f select{width:100%}}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{font:600 .8rem var(--body);background:var(--bg);color:var(--ink);border:0;border-left:1px solid var(--line);padding:7px 11px;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.side{display:grid;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:820px){.side{position:static}}
+.slip{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px}
+.verdict{font:700 1.5rem var(--display);padding:10px 12px;border-radius:6px;line-height:1.15}
+.verdict.bad{background:var(--bad-bg);color:var(--bad)}
+.verdict.ok{background:var(--ok-bg);color:var(--ok)}
+.verdict.unk{background:var(--unk-bg);color:var(--unk)}
+.tally{display:flex;gap:14px;font-size:.84rem;color:var(--dim);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.tally b{color:var(--ink)}
+.hits{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.hits li{display:grid;gap:1px;border-left:3px solid var(--bad);padding-left:10px;font-size:.9rem}
+.hits.unk li{border-color:var(--unk)}
+.c{font:500 .74rem var(--mono);color:var(--link);text-decoration:none;white-space:nowrap}
+.c:hover{text-decoration:underline}
+.btn{font:600 .9rem var(--body);background:var(--mark);color:var(--mark-ink);border:0;border-radius:6px;padding:9px 14px;cursor:pointer}
+.btn.q{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rep{display:grid;gap:8px}
+.rep label{display:grid;gap:3px;font-size:.82rem;font-weight:600}
+.rep input,.rep textarea{font:400 .9rem var(--body);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+pre{font:500 .76rem/1.5 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto}
+.small{font-size:.82rem;color:var(--dim)}
+.tbl{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.87rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:500 .7rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+td code{font:500 .74rem var(--mono);color:var(--dim)}
+.who{font:500 .7rem var(--mono);text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.limits{display:grid;gap:8px;border:1px dashed var(--dim);border-radius:10px;padding:16px}
+.limits ul{margin:0;padding-left:18px;display:grid;gap:5px;max-width:78ch}
+section{display:grid;gap:12px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="kicker">San Francisco Public Works Code §794, as code</div>
+  <h1>Is that sidewalk robot <mark>allowed</mark> to be here?</h1>
+  <p class="lede">San Francisco lets delivery robots on its sidewalks only as permitted tests. Describe what you saw. Each answer is checked against the code, and every result cites the clause it comes from.</p>
+  <div class="facts">
+    <div><b id="nRules">32</b><span>checkable rules extracted</span></div>
+    <div><b id="nRes">15</b><span>checkable from the sidewalk</span></div>
+    <div><b>3 mph</b><span>speed limit</span></div>
+    <div><b>30 ft</b><span>max distance to a human operator</span></div>
+    <div><b>9</b><span>robots allowed citywide</span></div>
+  </div>
+</header>
+
+<div class="modes" role="group" aria-label="Who is checking">
+  <button type="button" id="mRes" aria-pressed="true">I saw a robot</button>
+  <button type="button" id="mOp" aria-pressed="false">I operate robots</button>
+</div>
+
+<div class="cols">
+  <div class="form">
+    <div class="bar"><span class="tag" id="exTag">Example answers, not a real sighting</span><button class="btn q" type="button" id="clear">Clear all</button></div>
+    <div class="form" id="fields"></div>
+  </div>
+
+  <aside class="side">
+    <div class="slip" aria-live="polite">
+      <h3>Verdict</h3>
+      <div id="verdict" class="verdict"></div>
+      <div class="tally" id="tally"></div>
+      <ul class="hits" id="fails"></ul>
+      <div id="unkBox" hidden><h3 style="margin-bottom:6px">Couldn't check</h3><ul class="hits unk" id="unks"></ul></div>
+    </div>
+    <div class="slip" id="reportBox">
+      <h3>Incident report</h3>
+      <div class="rep">
+        <div class="two">
+          <label for="rWhen">When<input id="rWhen" type="datetime-local"></label>
+          <label for="rWhere">Where<input id="rWhere" value="Valencia St at 18th St"></label>
+        </div>
+        <label for="rOp">Company or ID on the robot<input id="rOp" placeholder="If visible"></label>
+        <label for="rWhat">What happened<textarea id="rWhat" rows="2">It came up behind me faster than I walk, with nobody near it, and I had to step off the curb.</textarea></label>
+      </div>
+      <pre id="out"></pre>
+      <div class="row"><button class="btn" type="button" id="copy">Copy report</button><button class="btn q" type="button" id="fmt">Show as data</button><span class="small" id="msg" role="status"></span></div>
+      <p class="small">Nothing is sent from this page. File it with <b>SF311</b>: call 311, use the SF311 app or <a href="https://sf311.org" target="_blank" rel="noopener">sf311.org</a>, and ask for Public Works. If someone is hurt, call 911 first.</p>
+    </div>
+  </aside>
+</div>
+
+<section>
+  <h2>Every rule, with its clause</h2>
+  <p class="lede">The same table drives this page and the command-line checker. The test column is the exact condition the code runs.</p>
+  <div class="tbl"><table><thead><tr><th>Clause</th><th>Rule</th><th>Test</th><th>Checked by</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <h3>If a rule is broken</h3>
+  <div class="tbl"><table><tbody id="pens"></tbody></table></div>
+</section>
+
+<div class="limits">
+  <h2>What this can't tell you</h2>
+  <ul>
+    <li><b>How often robots break these rules.</b> Operators must report incidents and complaints to the City every month under §794(h)(2)(C), but those reports are not published. There is no public incident dataset to check against.</li>
+    <li><b>Exact speed and distance.</b> A passer-by estimates 3 mph and 30 ft by eye. A failed check is grounds to report, not proof.</li>
+    <li><b>Zoning, corridor and permit status on the spot.</b> Those three need a lookup on City maps or the Public Works permit list.</li>
+    <li><b>Extra conditions on a specific permit.</b> The Director can add rules under §794(c) and (h)(1) that are not in the code text.</li>
+  </ul>
+  <p class="small">Rules extracted from <a id="src" target="_blank" rel="noopener">SF Public Works Code §794</a> on Nov 17, 2026 at Claude Impact Lab SF (Track 3D). Paraphrased, not legal advice. Check the clause before relying on it.</p>
+</div>
+</div>
+
+<script>
+const D = {"source": "San Francisco Public Works Code Sec. 794, Autonomous Delivery Devices", "source_url": "https://codelibrary.amlegal.com/codes/san_francisco/latest/sf_publicworks/0-0-0-48516", "retrieved": "2026-11-17", "definition": "A motorized device that carries items on City sidewalks for commercial purposes, guided or controlled without a person sitting or standing on it and steering it.", "fields": [{"id": "on_sidewalk", "mode": "resident", "type": "bool", "label": "Was it on the sidewalk?", "help": "No if it was in the roadway or a bike lane."}, {"id": "zoning_pdr", "mode": "resident", "type": "bool", "label": "Is this block zoned PDR (industrial)?", "help": "Look the address up on the SF Property Information Map.", "link": "https://sfplanninggis.org/pim/"}, {"id": "high_injury_corridor", "mode": "resident", "type": "bool", "label": "Is this street on the Vision Zero High Injury Network?", "help": "Check the Vision Zero SF map.", "link": "https://www.visionzerosf.org/maps-data/"}, {"id": "clear_width_ft", "mode": "resident", "type": "choice", "label": "How much clear sidewalk was left beside it?", "help": "", "options": [{"label": "6 ft or more", "value": 8}, {"label": "Less than 6 ft", "value": 4}]}, {"id": "accessible_path", "mode": "resident", "type": "bool", "label": "Could a wheelchair or stroller still get past?", "help": ""}, {"id": "speed_mph", "mode": "resident", "type": "choice", "label": "How fast was it going?", "help": "3 mph is an easy walking pace.", "options": [{"label": "Stopped or slower than a walk", "value": 2}, {"label": "About walking pace", "value": 3}, {"label": "Faster than a walk", "value": 5}]}, {"id": "operator_distance_ft", "mode": "resident", "type": "choice", "label": "Where was the human operator?", "help": "30 ft is about two car lengths.", "options": [{"label": "Right beside it", "value": 5}, {"label": "Nearby, within about 30 ft", "value": 25}, {"label": "Further than 30 ft", "value": 60}, {"label": "No one in sight", "value": 999}]}, {"id": "yielded", "mode": "resident", "type": "bool", "label": "Did it give way to people walking and cycling?", "help": ""}, {"id": "obeyed_signals", "mode": "resident", "type": "bool", "label": "Did it obey signs and walk signals?", "help": ""}, {"id": "light", "mode": "resident", "type": "choice", "label": "What was the light like?", "help": "", "options": [{"label": "Daylight", "value": "day"}, {"label": "Night, dawn or dusk", "value": "low"}]}, {"id": "headlights_on", "mode": "resident", "type": "bool", "label": "Were its headlights on?", "help": ""}, {"id": "warning_noise", "mode": "resident", "type": "bool", "label": "Did it make a warning sound as it moved?", "help": ""}, {"id": "has_id_contact", "mode": "resident", "type": "bool", "label": "Did it show an ID and the company's contact details?", "help": ""}, {"id": "hazardous_cargo", "mode": "resident", "type": "bool", "label": "Was it carrying waste or anything hazardous?", "help": "As far as you could tell."}, {"id": "idle_on_sidewalk", "mode": "resident", "type": "bool", "label": "Was it parked and left on the sidewalk?", "help": ""}, {"id": "devices_same_company", "mode": "both", "type": "number", "label": "How many robots from this company are out?", "help": "One permit covers at most 3."}, {"id": "has_permit", "mode": "both", "type": "bool", "label": "Does the company hold a current Public Works permit?", "help": "Public Works must list pending and approved permits on its website."}, {"id": "rd_only", "mode": "operator", "type": "bool", "label": "Is this run research-and-development testing only?", "help": "No commercial delivery service."}, {"id": "permit_day", "mode": "operator", "type": "number", "label": "Days since the permit was issued", "help": ""}, {"id": "extensions", "mode": "operator", "type": "number", "label": "90-day extensions granted", "help": "Two at most."}, {"id": "citywide_devices", "mode": "operator", "type": "number", "label": "Devices permitted citywide, including yours", "help": ""}, {"id": "permits_held", "mode": "operator", "type": "number", "label": "Permits you hold", "help": ""}, {"id": "notice_days", "mode": "operator", "type": "number", "label": "Days the public notice was posted at test sites", "help": ""}, {"id": "notice_photo", "mode": "operator", "type": "bool", "label": "Photo proof of the posted notice submitted?", "help": ""}, {"id": "hearing_held", "mode": "operator", "type": "bool", "label": "Was a public hearing held on the application?", "help": ""}, {"id": "appeal_pending", "mode": "operator", "type": "bool", "label": "Is an appeal of the permit decision pending?", "help": ""}, {"id": "stop_manual", "mode": "operator", "type": "bool", "label": "Operations manual on file, including how to stop the device?", "help": ""}, {"id": "privacy_policy", "mode": "operator", "type": "bool", "label": "Privacy policy for photo, video and test data on file?", "help": ""}, {"id": "conditions_met", "mode": "operator", "type": "bool", "label": "All conditions the Director attached to the permit met?", "help": ""}, {"id": "insurance_proof", "mode": "operator", "type": "bool", "label": "Proof of general liability, auto liability and workers' comp on hand?", "help": ""}, {"id": "indemnity", "mode": "operator", "type": "bool", "label": "Agreement to indemnify the City signed?", "help": ""}, {"id": "site_visit", "mode": "operator", "type": "bool", "label": "Public Works allowed to observe a session this term?", "help": ""}, {"id": "monthly_data", "mode": "operator", "type": "bool", "label": "Last month's test data (GPS, photos) sent to the City?", "help": ""}, {"id": "monthly_businesses", "mode": "operator", "type": "bool", "label": "Last month's list of participating SF businesses sent?", "help": ""}, {"id": "monthly_incidents", "mode": "operator", "type": "bool", "label": "Last month's incident and complaint report sent?", "help": ""}], "rules": [{"clause": "794(a)", "who": "resident", "title": "Sidewalks only", "text": "The permit program covers City sidewalks. Streets and highways under SFMTA jurisdiction are outside it.", "check": {"field": "on_sidewalk", "op": "==", "value": true}, "id": "R01"}, {"clause": "794(i)(4)(A)", "who": "resident", "title": "PDR zoning only", "text": "Testing is limited to sidewalks in PDR (Production, Distribution, Repair) zoning districts.", "check": {"field": "zoning_pdr", "op": "==", "value": true}, "id": "R02"}, {"clause": "794(i)(4)(B)", "who": "resident", "title": "Not on a high-injury corridor", "text": "No testing on sidewalks along Vision Zero high-injury corridors.", "check": {"field": "high_injury_corridor", "op": "==", "value": false}, "id": "R03"}, {"clause": "794(i)(4)(C)", "who": "resident", "title": "Room for people with disabilities", "text": "The sidewalk must keep a path of travel for people with disabilities, or have an effective width of at least 6 feet.", "check": {"any": [{"field": "clear_width_ft", "op": ">=", "value": 6}, {"field": "accessible_path", "op": "==", "value": true}]}, "id": "R04"}, {"clause": "794(i)(1)", "who": "resident", "title": "3 mph speed limit", "text": "A device may not go faster than 3 miles per hour.", "check": {"field": "speed_mph", "op": "<=", "value": 3}, "id": "R05"}, {"clause": "794(i)(2)", "who": "resident", "title": "Human operator within 30 feet", "text": "A human operator must stay within 30 feet of the device for the whole test.", "check": {"field": "operator_distance_ft", "op": "<=", "value": 30}, "id": "R06"}, {"clause": "794(i)(3)", "who": "resident", "title": "Yield to pedestrians and bicycles", "text": "Devices must yield the right of way to pedestrians and bicycles.", "check": {"field": "yielded", "op": "==", "value": true}, "id": "R07"}, {"clause": "794(i)(5)", "who": "resident", "title": "Obey signs and signals", "text": "Devices must obey all traffic and pedestrian signs and signals.", "check": {"field": "obeyed_signals", "op": "==", "value": true}, "id": "R08"}, {"clause": "794(i)(7)", "who": "resident", "title": "Headlights in low light", "text": "Headlights must operate at night, sunrise and sunset.", "check": {"any": [{"field": "light", "op": "==", "value": "day"}, {"field": "headlights_on", "op": "==", "value": true}]}, "id": "R09"}, {"clause": "794(i)(8)", "who": "resident", "title": "Warning noise", "text": "A device must emit a warning noise while operating, loud enough for nearby pedestrians and cyclists.", "check": {"field": "warning_noise", "op": "==", "value": true}, "id": "R10"}, {"clause": "794(i)(9)", "who": "resident", "title": "ID and contact details", "text": "Each device must carry a unique identifier with the permittee's contact information.", "check": {"field": "has_id_contact", "op": "==", "value": true}, "id": "R11"}, {"clause": "794(i)(6)", "who": "resident", "title": "No waste or hazardous cargo", "text": "Devices may not carry waste or hazardous materials, including flammables or ammunition.", "check": {"field": "hazardous_cargo", "op": "==", "value": false}, "id": "R12"}, {"clause": "794(i)(12)", "who": "resident", "title": "Docked on private property", "text": "When not in use, a device must be docked on private property, not on the sidewalk or public right of way.", "check": {"field": "idle_on_sidewalk", "op": "==", "value": false}, "id": "R13"}, {"clause": "794(d)(2)", "who": "both", "title": "Three devices per permit", "text": "A permit may cover no more than three devices.", "check": {"field": "devices_same_company", "op": "<=", "value": 3}, "id": "R14"}, {"clause": "794(b)", "who": "both", "title": "Permit required", "text": "Operating a device on a public sidewalk without a permit is unlawful.", "check": {"field": "has_permit", "op": "==", "value": true}, "id": "R15"}, {"clause": "794(a)", "who": "operator", "title": "R&D testing only", "text": "Permits cover research-and-development testing. Every other use is prohibited.", "check": {"field": "rd_only", "op": "==", "value": true}, "id": "R16"}, {"clause": "794(d)(1)", "who": "operator", "title": "180-day term, two extensions", "text": "A permit lasts up to 180 days, with at most two 90-day extensions.", "check": {"all": [{"field": "extensions", "op": "<=", "value": 2}, {"field": "permit_day", "op": "<=", "value": 180, "plus": {"field": "extensions", "times": 90}}]}, "id": "R17"}, {"clause": "794(d)(3)", "who": "operator", "title": "Nine devices citywide", "text": "No more than nine devices may be permitted in the city at one time.", "check": {"field": "citywide_devices", "op": "<=", "value": 9}, "id": "R18"}, {"clause": "794(d)(4)", "who": "operator", "title": "One permit per permittee", "text": "A permittee may hold one permit (a second only under a narrow exception, and it cannot be extended).", "check": {"field": "permits_held", "op": "<=", "value": 1}, "id": "R19"}, {"clause": "794(f)", "who": "operator", "title": "Notice posted for 20 days", "text": "Notice must be posted at the test sites for 20 days.", "check": {"field": "notice_days", "op": ">=", "value": 20}, "id": "R20"}, {"clause": "794(f)", "who": "operator", "title": "Photo proof of notice", "text": "The applicant must submit photo evidence that notice was posted.", "check": {"field": "notice_photo", "op": "==", "value": true}, "id": "R21"}, {"clause": "794(g)(1)", "who": "operator", "title": "Public hearing", "text": "The Director holds a public hearing on every application.", "check": {"field": "hearing_held", "op": "==", "value": true}, "id": "R22"}, {"clause": "794(g)(2)", "who": "operator", "title": "No operating during an appeal", "text": "The permittee may not operate devices while an appeal to the Board of Supervisors is pending.", "check": {"field": "appeal_pending", "op": "==", "value": false}, "id": "R23"}, {"clause": "794(e)(6)", "who": "operator", "title": "Stop procedure on file", "text": "The application must include operations manuals, including how to bring the device to a full stop.", "check": {"field": "stop_manual", "op": "==", "value": true}, "id": "R24"}, {"clause": "794(e)(7)", "who": "operator", "title": "Privacy policy on file", "text": "The application must include a privacy policy for photo, video and other test data.", "check": {"field": "privacy_policy", "op": "==", "value": true}, "id": "R25"}, {"clause": "794(h)(1)", "who": "operator", "title": "Permit conditions met", "text": "The Director may attach safety conditions. Breaking them can mean revocation and a bar on future permits.", "check": {"field": "conditions_met", "op": "==", "value": true}, "id": "R26"}, {"clause": "794(i)(10)", "who": "operator", "title": "Insurance proof on hand", "text": "Proof of general liability, automotive liability and workers' compensation insurance, readily accessible.", "check": {"field": "insurance_proof", "op": "==", "value": true}, "id": "R27"}, {"clause": "794(i)(11)", "who": "operator", "title": "City indemnified", "text": "The permittee must agree to indemnify, defend and hold the City harmless.", "check": {"field": "indemnity", "op": "==", "value": true}, "id": "R28"}, {"clause": "794(i)(13)", "who": "operator", "title": "Site visit allowed", "text": "Public Works must be allowed to observe at least one test session per permit term.", "check": {"field": "site_visit", "op": "==", "value": true}, "id": "R29"}, {"clause": "794(h)(2)(A)", "who": "operator", "title": "Monthly test data", "text": "Test data, including GPS and photos, goes to the City Administrator and Public Works every month.", "check": {"field": "monthly_data", "op": "==", "value": true}, "id": "R30"}, {"clause": "794(h)(2)(B)", "who": "operator", "title": "Monthly business list", "text": "San Francisco businesses using the testing must be disclosed every month.", "check": {"field": "monthly_businesses", "op": "==", "value": true}, "id": "R31"}, {"clause": "794(h)(2)(C)", "who": "operator", "title": "Monthly incident report", "text": "Violations, safety incidents, complaints, malfunctions, tampering and collisions must be reported every month.", "check": {"field": "monthly_incidents", "op": "==", "value": true}, "id": "R32"}], "penalties": [{"clause": "794(k)(1)", "text": "Infraction against the permittee: up to $100, then $200, then $500 for repeat violations within a year. Staff cannot be criminally penalized."}, {"clause": "794(k)(2)", "text": "Civil penalty of up to $500 per day, plus injunction and attorney's fees, through the City Attorney."}, {"clause": "794(k)(3)", "text": "Administrative citation of up to $1,000 per day per violation, issued by Public Works."}, {"clause": "794(h)(1)", "text": "Permit suspension or revocation. Revocation is mandatory for a significant safety risk and bars future permits."}]};
+/*ENGINE*/
+function ev(c,o){
+  if(c.any){const r=c.any.map(x=>ev(x,o));return r.includes(true)?true:r.includes(null)?null:false}
+  if(c.all){const r=c.all.map(x=>ev(x,o));return r.includes(false)?false:r.includes(null)?null:true}
+  const v=o[c.field]; if(v==null) return null;
+  let t=c.value;
+  if(c.plus){const p=o[c.plus.field]; if(p==null) return null; t+=p*c.plus.times}
+  return c.op==="<="?v<=t:c.op===">="?v>=t:v===t;
+}
+function check(o,mode){
+  const rules=D.rules.filter(r=>r.who===mode||r.who==="both");
+  const res=rules.map(r=>[r,ev(r.check,o)]);
+  return {fails:res.filter(x=>x[1]===false).map(x=>x[0]),unk:res.filter(x=>x[1]===null).map(x=>x[0]),n:rules.length};
+}
+function show(c){
+  if(c.any) return c.any.map(show).join(" OR ");
+  if(c.all) return c.all.map(show).join(" AND ");
+  return c.field+" "+c.op+" "+JSON.stringify(c.value)+(c.plus?" + "+c.plus.times+"×"+c.plus.field:"");
+}
+/*END*/
+const EX={
+  resident:{on_sidewalk:true,zoning_pdr:false,high_injury_corridor:null,clear_width_ft:4,accessible_path:false,speed_mph:5,operator_distance_ft:999,yielded:false,obeyed_signals:true,light:"low",headlights_on:true,warning_noise:null,has_id_contact:false,hazardous_cargo:false,idle_on_sidewalk:false,devices_same_company:1,has_permit:null},
+  operator:{has_permit:true,rd_only:true,permit_day:200,extensions:0,devices_same_company:3,citywide_devices:9,permits_held:1,notice_days:20,notice_photo:true,hearing_held:true,appeal_pending:false,stop_manual:true,privacy_policy:true,conditions_met:true,insurance_proof:true,indemnity:true,site_visit:true,monthly_data:true,monthly_businesses:true,monthly_incidents:false}
+};
+const obs={resident:{...EX.resident},operator:{...EX.operator}};
+let mode="resident", asData=false;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cite=r=>`<a class="c" href="${D.source_url}" target="_blank" rel="noopener">§${r.clause}</a>`;
+
+function renderFields(){
+  const o=obs[mode];
+  $("#fields").innerHTML=D.fields.filter(f=>f.mode===mode||f.mode==="both").map(f=>{
+    const v=o[f.id];
+    let ctl;
+    if(f.type==="bool") ctl=`<div class="seg" role="group" aria-label="${esc(f.label)}">${[["Yes",true],["No",false],["Not sure",null]].map(([l,x])=>`<button type="button" data-f="${f.id}" data-v="${x}" aria-pressed="${v===x||(x===null&&v==null)}">${l}</button>`).join("")}</div>`;
+    else if(f.type==="choice") ctl=`<select id="f-${f.id}" data-f="${f.id}" aria-label="${esc(f.label)}"><option value="">Not sure</option>${f.options.map((p,i)=>`<option value="${i}"${v===p.value?" selected":""}>${esc(p.label)}</option>`).join("")}</select>`;
+    else ctl=`<input type="number" min="0" id="f-${f.id}" data-f="${f.id}" aria-label="${esc(f.label)}" value="${v??""}">`;
+    return `<div class="f"><div class="lab">${esc(f.label)}${f.help?`<div class="help">${esc(f.help)}${f.link?` <a href="${f.link}" target="_blank" rel="noopener">Open map</a>`:""}</div>`:""}</div>${ctl}</div>`;
+  }).join("");
+}
+function reportText(r){
+  const o=obs.resident, when=$("#rWhen").value;
+  if(asData) return JSON.stringify({reported_at:when,location:$("#rWhere").value,operator_or_device_id:$("#rOp").value,description:$("#rWhat").value,observation:o,violations:r.fails.map(x=>({clause:"SF PWC §"+x.clause,rule:x.title})),not_checked:r.unk.map(x=>"§"+x.clause)},null,1);
+  return `Sidewalk delivery robot report (SF Public Works Code §794)
+When: ${when?new Date(when).toLocaleString():""}
+Where: ${$("#rWhere").value}
+Robot: ${$("#rOp").value||"no company name or ID visible"}
+
+${$("#rWhat").value}
+
+Apparent violations:
+${r.fails.length?r.fails.map(x=>`- §${x.clause} ${x.title}`).join("\n"):"- none marked"}${r.unk.length?`\n\nNot verified: ${r.unk.map(x=>"§"+x.clause).join(", ")}`:""}
+
+Please confirm whether this operator holds a current §794 permit, and record this complaint in its monthly incident report under §794(h)(2)(C).`;
+}
+function update(){
+  const r=check(obs[mode],mode), pass=r.n-r.fails.length-r.unk.length, v=$("#verdict");
+  if(r.fails.length){v.className="verdict bad";v.textContent=`Not allowed. ${r.fails.length} rule${r.fails.length>1?"s":""} broken.`}
+  else if(pass===0){v.className="verdict unk";v.textContent="Nothing answered yet."}
+  else if(r.unk.length){v.className="verdict unk";v.textContent=`No violation found, but ${r.unk.length} unchecked.`}
+  else{v.className="verdict ok";v.textContent=`Allowed. All ${r.n} checks pass.`}
+  $("#tally").innerHTML=`<span><b>${pass}</b> pass</span><span><b>${r.fails.length}</b> fail</span><span><b>${r.unk.length}</b> unknown</span><span>of ${r.n}</span>`;
+  $("#fails").innerHTML=r.fails.map(x=>`<li><span>${cite(x)} <b>${esc(x.title)}</b></span><span>${esc(x.text)}</span></li>`).join("");
+  $("#unkBox").hidden=!r.unk.length||pass+r.fails.length===0;
+  $("#unks").innerHTML=r.unk.map(x=>`<li><span>${cite(x)} ${esc(x.title)}</span></li>`).join("");
+  $("#reportBox").hidden=mode!=="resident";
+  if(mode==="resident") $("#out").textContent=reportText(r);
+}
+function setMode(m){mode=m;$("#mRes").setAttribute("aria-pressed",m==="resident");$("#mOp").setAttribute("aria-pressed",m==="operator");$("#exTag").hidden=JSON.stringify(obs[m])!==JSON.stringify(EX[m]);renderFields();update()}
+$("#mRes").onclick=()=>setMode("resident"); $("#mOp").onclick=()=>setMode("operator");
+$("#fields").addEventListener("click",e=>{const b=e.target.closest(".seg button");if(!b)return;obs[mode][b.dataset.f]=JSON.parse(b.dataset.v);b.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("#exTag").hidden=true;update()});
+$("#fields").addEventListener("input",e=>{const el=e.target,id=el.dataset.f;if(!id)return;const f=D.fields.find(x=>x.id===id);
+  obs[mode][id]=el.value===""?null:f.type==="choice"?f.options[+el.value].value:+el.value;$("#exTag").hidden=true;update()});
+$("#clear").onclick=()=>{obs[mode]={};$("#exTag").hidden=true;renderFields();update()};
+document.querySelectorAll(".rep input,.rep textarea").forEach(x=>x.addEventListener("input",update));
+$("#fmt").onclick=()=>{asData=!asData;$("#fmt").textContent=asData?"Show as text":"Show as data";update()};
+$("#copy").onclick=()=>navigator.clipboard.writeText($("#out").textContent).then(()=>$("#msg").textContent="Copied.").catch(()=>{const g=document.createRange();g.selectNodeContents($("#out"));const s=getSelection();s.removeAllRanges();s.addRange(g);$("#msg").textContent="Selected. Press Ctrl or Cmd+C."});
+const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());$("#rWhen").value=now.toISOString().slice(0,16);
+$("#src").href=D.source_url;
+$("#nRules").textContent=D.rules.length;$("#nRes").textContent=D.rules.filter(r=>r.who!=="operator").length;
+const WHO={resident:"Resident",operator:"Operator",both:"Either"};
+$("#rows").innerHTML=D.rules.map(r=>`<tr><td>${cite(r)}</td><td><b>${esc(r.title)}.</b> ${esc(r.text)}</td><td><code>${esc(show(r.check))}</code></td><td class="who">${WHO[r.who]}</td></tr>`).join("");
+$("#pens").innerHTML=D.penalties.map(p=>`<tr><td><span class="c">§${p.clause}</span></td><td>${esc(p.text)}</td></tr>`).join("");
+setMode("resident");
+</script>

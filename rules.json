@@ -1,0 +1,742 @@
+{
+ "source": "San Francisco Public Works Code Sec. 794, Autonomous Delivery Devices",
+ "source_url": "https://codelibrary.amlegal.com/codes/san_francisco/latest/sf_publicworks/0-0-0-48516",
+ "retrieved": "2026-11-17",
+ "definition": "A motorized device that carries items on City sidewalks for commercial purposes, guided or controlled without a person sitting or standing on it and steering it.",
+ "fields": [
+  {
+   "id": "on_sidewalk",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Was it on the sidewalk?",
+   "help": "No if it was in the roadway or a bike lane."
+  },
+  {
+   "id": "zoning_pdr",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Is this block zoned PDR (industrial)?",
+   "help": "Look the address up on the SF Property Information Map.",
+   "link": "https://sfplanninggis.org/pim/"
+  },
+  {
+   "id": "high_injury_corridor",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Is this street on the Vision Zero High Injury Network?",
+   "help": "Check the Vision Zero SF map.",
+   "link": "https://www.visionzerosf.org/maps-data/"
+  },
+  {
+   "id": "clear_width_ft",
+   "mode": "resident",
+   "type": "choice",
+   "label": "How much clear sidewalk was left beside it?",
+   "help": "",
+   "options": [
+    {
+     "label": "6 ft or more",
+     "value": 8
+    },
+    {
+     "label": "Less than 6 ft",
+     "value": 4
+    }
+   ]
+  },
+  {
+   "id": "accessible_path",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Could a wheelchair or stroller still get past?",
+   "help": ""
+  },
+  {
+   "id": "speed_mph",
+   "mode": "resident",
+   "type": "choice",
+   "label": "How fast was it going?",
+   "help": "3 mph is an easy walking pace.",
+   "options": [
+    {
+     "label": "Stopped or slower than a walk",
+     "value": 2
+    },
+    {
+     "label": "About walking pace",
+     "value": 3
+    },
+    {
+     "label": "Faster than a walk",
+     "value": 5
+    }
+   ]
+  },
+  {
+   "id": "operator_distance_ft",
+   "mode": "resident",
+   "type": "choice",
+   "label": "Where was the human operator?",
+   "help": "30 ft is about two car lengths.",
+   "options": [
+    {
+     "label": "Right beside it",
+     "value": 5
+    },
+    {
+     "label": "Nearby, within about 30 ft",
+     "value": 25
+    },
+    {
+     "label": "Further than 30 ft",
+     "value": 60
+    },
+    {
+     "label": "No one in sight",
+     "value": 999
+    }
+   ]
+  },
+  {
+   "id": "yielded",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Did it give way to people walking and cycling?",
+   "help": ""
+  },
+  {
+   "id": "obeyed_signals",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Did it obey signs and walk signals?",
+   "help": ""
+  },
+  {
+   "id": "light",
+   "mode": "resident",
+   "type": "choice",
+   "label": "What was the light like?",
+   "help": "",
+   "options": [
+    {
+     "label": "Daylight",
+     "value": "day"
+    },
+    {
+     "label": "Night, dawn or dusk",
+     "value": "low"
+    }
+   ]
+  },
+  {
+   "id": "headlights_on",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Were its headlights on?",
+   "help": ""
+  },
+  {
+   "id": "warning_noise",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Did it make a warning sound as it moved?",
+   "help": ""
+  },
+  {
+   "id": "has_id_contact",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Did it show an ID and the company's contact details?",
+   "help": ""
+  },
+  {
+   "id": "hazardous_cargo",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Was it carrying waste or anything hazardous?",
+   "help": "As far as you could tell."
+  },
+  {
+   "id": "idle_on_sidewalk",
+   "mode": "resident",
+   "type": "bool",
+   "label": "Was it parked and left on the sidewalk?",
+   "help": ""
+  },
+  {
+   "id": "devices_same_company",
+   "mode": "both",
+   "type": "number",
+   "label": "How many robots from this company are out?",
+   "help": "One permit covers at most 3."
+  },
+  {
+   "id": "has_permit",
+   "mode": "both",
+   "type": "bool",
+   "label": "Does the company hold a current Public Works permit?",
+   "help": "Public Works must list pending and approved permits on its website."
+  },
+  {
+   "id": "rd_only",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Is this run research-and-development testing only?",
+   "help": "No commercial delivery service."
+  },
+  {
+   "id": "permit_day",
+   "mode": "operator",
+   "type": "number",
+   "label": "Days since the permit was issued",
+   "help": ""
+  },
+  {
+   "id": "extensions",
+   "mode": "operator",
+   "type": "number",
+   "label": "90-day extensions granted",
+   "help": "Two at most."
+  },
+  {
+   "id": "citywide_devices",
+   "mode": "operator",
+   "type": "number",
+   "label": "Devices permitted citywide, including yours",
+   "help": ""
+  },
+  {
+   "id": "permits_held",
+   "mode": "operator",
+   "type": "number",
+   "label": "Permits you hold",
+   "help": ""
+  },
+  {
+   "id": "notice_days",
+   "mode": "operator",
+   "type": "number",
+   "label": "Days the public notice was posted at test sites",
+   "help": ""
+  },
+  {
+   "id": "notice_photo",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Photo proof of the posted notice submitted?",
+   "help": ""
+  },
+  {
+   "id": "hearing_held",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Was a public hearing held on the application?",
+   "help": ""
+  },
+  {
+   "id": "appeal_pending",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Is an appeal of the permit decision pending?",
+   "help": ""
+  },
+  {
+   "id": "stop_manual",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Operations manual on file, including how to stop the device?",
+   "help": ""
+  },
+  {
+   "id": "privacy_policy",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Privacy policy for photo, video and test data on file?",
+   "help": ""
+  },
+  {
+   "id": "conditions_met",
+   "mode": "operator",
+   "type": "bool",
+   "label": "All conditions the Director attached to the permit met?",
+   "help": ""
+  },
+  {
+   "id": "insurance_proof",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Proof of general liability, auto liability and workers' comp on hand?",
+   "help": ""
+  },
+  {
+   "id": "indemnity",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Agreement to indemnify the City signed?",
+   "help": ""
+  },
+  {
+   "id": "site_visit",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Public Works allowed to observe a session this term?",
+   "help": ""
+  },
+  {
+   "id": "monthly_data",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Last month's test data (GPS, photos) sent to the City?",
+   "help": ""
+  },
+  {
+   "id": "monthly_businesses",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Last month's list of participating SF businesses sent?",
+   "help": ""
+  },
+  {
+   "id": "monthly_incidents",
+   "mode": "operator",
+   "type": "bool",
+   "label": "Last month's incident and complaint report sent?",
+   "help": ""
+  }
+ ],
+ "rules": [
+  {
+   "clause": "794(a)",
+   "who": "resident",
+   "title": "Sidewalks only",
+   "text": "The permit program covers City sidewalks. Streets and highways under SFMTA jurisdiction are outside it.",
+   "check": {
+    "field": "on_sidewalk",
+    "op": "==",
+    "value": true
+   },
+   "id": "R01"
+  },
+  {
+   "clause": "794(i)(4)(A)",
+   "who": "resident",
+   "title": "PDR zoning only",
+   "text": "Testing is limited to sidewalks in PDR (Production, Distribution, Repair) zoning districts.",
+   "check": {
+    "field": "zoning_pdr",
+    "op": "==",
+    "value": true
+   },
+   "id": "R02"
+  },
+  {
+   "clause": "794(i)(4)(B)",
+   "who": "resident",
+   "title": "Not on a high-injury corridor",
+   "text": "No testing on sidewalks along Vision Zero high-injury corridors.",
+   "check": {
+    "field": "high_injury_corridor",
+    "op": "==",
+    "value": false
+   },
+   "id": "R03"
+  },
+  {
+   "clause": "794(i)(4)(C)",
+   "who": "resident",
+   "title": "Room for people with disabilities",
+   "text": "The sidewalk must keep a path of travel for people with disabilities, or have an effective width of at least 6 feet.",
+   "check": {
+    "any": [
+     {
+      "field": "clear_width_ft",
+      "op": ">=",
+      "value": 6
+     },
+     {
+      "field": "accessible_path",
+      "op": "==",
+      "value": true
+     }
+    ]
+   },
+   "id": "R04"
+  },
+  {
+   "clause": "794(i)(1)",
+   "who": "resident",
+   "title": "3 mph speed limit",
+   "text": "A device may not go faster than 3 miles per hour.",
+   "check": {
+    "field": "speed_mph",
+    "op": "<=",
+    "value": 3
+   },
+   "id": "R05"
+  },
+  {
+   "clause": "794(i)(2)",
+   "who": "resident",
+   "title": "Human operator within 30 feet",
+   "text": "A human operator must stay within 30 feet of the device for the whole test.",
+   "check": {
+    "field": "operator_distance_ft",
+    "op": "<=",
+    "value": 30
+   },
+   "id": "R06"
+  },
+  {
+   "clause": "794(i)(3)",
+   "who": "resident",
+   "title": "Yield to pedestrians and bicycles",
+   "text": "Devices must yield the right of way to pedestrians and bicycles.",
+   "check": {
+    "field": "yielded",
+    "op": "==",
+    "value": true
+   },
+   "id": "R07"
+  },
+  {
+   "clause": "794(i)(5)",
+   "who": "resident",
+   "title": "Obey signs and signals",
+   "text": "Devices must obey all traffic and pedestrian signs and signals.",
+   "check": {
+    "field": "obeyed_signals",
+    "op": "==",
+    "value": true
+   },
+   "id": "R08"
+  },
+  {
+   "clause": "794(i)(7)",
+   "who": "resident",
+   "title": "Headlights in low light",
+   "text": "Headlights must operate at night, sunrise and sunset.",
+   "check": {
+    "any": [
+     {
+      "field": "light",
+      "op": "==",
+      "value": "day"
+     },
+     {
+      "field": "headlights_on",
+      "op": "==",
+      "value": true
+     }
+    ]
+   },
+   "id": "R09"
+  },
+  {
+   "clause": "794(i)(8)",
+   "who": "resident",
+   "title": "Warning noise",
+   "text": "A device must emit a warning noise while operating, loud enough for nearby pedestrians and cyclists.",
+   "check": {
+    "field": "warning_noise",
+    "op": "==",
+    "value": true
+   },
+   "id": "R10"
+  },
+  {
+   "clause": "794(i)(9)",
+   "who": "resident",
+   "title": "ID and contact details",
+   "text": "Each device must carry a unique identifier with the permittee's contact information.",
+   "check": {
+    "field": "has_id_contact",
+    "op": "==",
+    "value": true
+   },
+   "id": "R11"
+  },
+  {
+   "clause": "794(i)(6)",
+   "who": "resident",
+   "title": "No waste or hazardous cargo",
+   "text": "Devices may not carry waste or hazardous materials, including flammables or ammunition.",
+   "check": {
+    "field": "hazardous_cargo",
+    "op": "==",
+    "value": false
+   },
+   "id": "R12"
+  },
+  {
+   "clause": "794(i)(12)",
+   "who": "resident",
+   "title": "Docked on private property",
+   "text": "When not in use, a device must be docked on private property, not on the sidewalk or public right of way.",
+   "check": {
+    "field": "idle_on_sidewalk",
+    "op": "==",
+    "value": false
+   },
+   "id": "R13"
+  },
+  {
+   "clause": "794(d)(2)",
+   "who": "both",
+   "title": "Three devices per permit",
+   "text": "A permit may cover no more than three devices.",
+   "check": {
+    "field": "devices_same_company",
+    "op": "<=",
+    "value": 3
+   },
+   "id": "R14"
+  },
+  {
+   "clause": "794(b)",
+   "who": "both",
+   "title": "Permit required",
+   "text": "Operating a device on a public sidewalk without a permit is unlawful.",
+   "check": {
+    "field": "has_permit",
+    "op": "==",
+    "value": true
+   },
+   "id": "R15"
+  },
+  {
+   "clause": "794(a)",
+   "who": "operator",
+   "title": "R&D testing only",
+   "text": "Permits cover research-and-development testing. Every other use is prohibited.",
+   "check": {
+    "field": "rd_only",
+    "op": "==",
+    "value": true
+   },
+   "id": "R16"
+  },
+  {
+   "clause": "794(d)(1)",
+   "who": "operator",
+   "title": "180-day term, two extensions",
+   "text": "A permit lasts up to 180 days, with at most two 90-day extensions.",
+   "check": {
+    "all": [
+     {
+      "field": "extensions",
+      "op": "<=",
+      "value": 2
+     },
+     {
+      "field": "permit_day",
+      "op": "<=",
+      "value": 180,
+      "plus": {
+       "field": "extensions",
+       "times": 90
+      }
+     }
+    ]
+   },
+   "id": "R17"
+  },
+  {
+   "clause": "794(d)(3)",
+   "who": "operator",
+   "title": "Nine devices citywide",
+   "text": "No more than nine devices may be permitted in the city at one time.",
+   "check": {
+    "field": "citywide_devices",
+    "op": "<=",
+    "value": 9
+   },
+   "id": "R18"
+  },
+  {
+   "clause": "794(d)(4)",
+   "who": "operator",
+   "title": "One permit per permittee",
+   "text": "A permittee may hold one permit (a second only under a narrow exception, and it cannot be extended).",
+   "check": {
+    "field": "permits_held",
+    "op": "<=",
+    "value": 1
+   },
+   "id": "R19"
+  },
+  {
+   "clause": "794(f)",
+   "who": "operator",
+   "title": "Notice posted for 20 days",
+   "text": "Notice must be posted at the test sites for 20 days.",
+   "check": {
+    "field": "notice_days",
+    "op": ">=",
+    "value": 20
+   },
+   "id": "R20"
+  },
+  {
+   "clause": "794(f)",
+   "who": "operator",
+   "title": "Photo proof of notice",
+   "text": "The applicant must submit photo evidence that notice was posted.",
+   "check": {
+    "field": "notice_photo",
+    "op": "==",
+    "value": true
+   },
+   "id": "R21"
+  },
+  {
+   "clause": "794(g)(1)",
+   "who": "operator",
+   "title": "Public hearing",
+   "text": "The Director holds a public hearing on every application.",
+   "check": {
+    "field": "hearing_held",
+    "op": "==",
+    "value": true
+   },
+   "id": "R22"
+  },
+  {
+   "clause": "794(g)(2)",
+   "who": "operator",
+   "title": "No operating during an appeal",
+   "text": "The permittee may not operate devices while an appeal to the Board of Supervisors is pending.",
+   "check": {
+    "field": "appeal_pending",
+    "op": "==",
+    "value": false
+   },
+   "id": "R23"
+  },
+  {
+   "clause": "794(e)(6)",
+   "who": "operator",
+   "title": "Stop procedure on file",
+   "text": "The application must include operations manuals, including how to bring the device to a full stop.",
+   "check": {
+    "field": "stop_manual",
+    "op": "==",
+    "value": true
+   },
+   "id": "R24"
+  },
+  {
+   "clause": "794(e)(7)",
+   "who": "operator",
+   "title": "Privacy policy on file",
+   "text": "The application must include a privacy policy for photo, video and other test data.",
+   "check": {
+    "field": "privacy_policy",
+    "op": "==",
+    "value": true
+   },
+   "id": "R25"
+  },
+  {
+   "clause": "794(h)(1)",
+   "who": "operator",
+   "title": "Permit conditions met",
+   "text": "The Director may attach safety conditions. Breaking them can mean revocation and a bar on future permits.",
+   "check": {
+    "field": "conditions_met",
+    "op": "==",
+    "value": true
+   },
+   "id": "R26"
+  },
+  {
+   "clause": "794(i)(10)",
+   "who": "operator",
+   "title": "Insurance proof on hand",
+   "text": "Proof of general liability, automotive liability and workers' compensation insurance, readily accessible.",
+   "check": {
+    "field": "insurance_proof",
+    "op": "==",
+    "value": true
+   },
+   "id": "R27"
+  },
+  {
+   "clause": "794(i)(11)",
+   "who": "operator",
+   "title": "City indemnified",
+   "text": "The permittee must agree to indemnify, defend and hold the City harmless.",
+   "check": {
+    "field": "indemnity",
+    "op": "==",
+    "value": true
+   },
+   "id": "R28"
+  },
+  {
+   "clause": "794(i)(13)",
+   "who": "operator",
+   "title": "Site visit allowed",
+   "text": "Public Works must be allowed to observe at least one test session per permit term.",
+   "check": {
+    "field": "site_visit",
+    "op": "==",
+    "value": true
+   },
+   "id": "R29"
+  },
+  {
+   "clause": "794(h)(2)(A)",
+   "who": "operator",
+   "title": "Monthly test data",
+   "text": "Test data, including GPS and photos, goes to the City Administrator and Public Works every month.",
+   "check": {
+    "field": "monthly_data",
+    "op": "==",
+    "value": true
+   },
+   "id": "R30"
+  },
+  {
+   "clause": "794(h)(2)(B)",
+   "who": "operator",
+   "title": "Monthly business list",
+   "text": "San Francisco businesses using the testing must be disclosed every month.",
+   "check": {
+    "field": "monthly_businesses",
+    "op": "==",
+    "value": true
+   },
+   "id": "R31"
+  },
+  {
+   "clause": "794(h)(2)(C)",
+   "who": "operator",
+   "title": "Monthly incident report",
+   "text": "Violations, safety incidents, complaints, malfunctions, tampering and collisions must be reported every month.",
+   "check": {
+    "field": "monthly_incidents",
+    "op": "==",
+    "value": true
+   },
+   "id": "R32"
+  }
+ ],
+ "penalties": [
+  {
+   "clause": "794(k)(1)",
+   "text": "Infraction against the permittee: up to $100, then $200, then $500 for repeat violations within a year. Staff cannot be criminally penalized."
+  },
+  {
+   "clause": "794(k)(2)",
+   "text": "Civil penalty of up to $500 per day, plus injunction and attorney's fees, through the City Attorney."
+  },
+  {
+   "clause": "794(k)(3)",
+   "text": "Administrative citation of up to $1,000 per day per violation, issued by Public Works."
+  },
+  {
+   "clause": "794(h)(1)",
+   "text": "Permit suspension or revocation. Revocation is mandatory for a significant safety risk and bars future permits."
+  }
+ ]
+}

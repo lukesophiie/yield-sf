@@ -1,0 +1,458 @@
+<title>Yield SF</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: the map is the app. Floating rounded cards over it, one loud orange button, a sheet that slides between states. */
+:root{
+  --water:#b9e1f4; --land:#eef2ee; --park:#cbe7c4; --road:#ffffff; --road2:#d5dce4; --label:#6a7686;
+  --pdr:#19b86a; --hin:#ff6b4a;
+  --card:#ffffff; --ink:#18223a; --dim:#5d6980; --line:#e1e6ee; --soft:#f2f5f9;
+  --go:#ff6a1a; --go-ink:#ffffff; --ok:#0f9d58; --ok-bg:#dcf5e7; --bad:#e2343a; --bad-bg:#fde4e4; --warn:#b97a00; --warn-bg:#fff1cc; --link:#2057d6;
+  --font:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --shadow:0 6px 24px rgba(20,30,60,.18);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --water:#0e2738; --land:#1b232d; --park:#1d3a2a; --road:#33404e; --road2:#27323e; --label:#93a0b3;
+  --pdr:#2bd683; --hin:#ff7d5f;
+  --card:#1a2230; --ink:#eef2f8; --dim:#9daabd; --line:#2d3748; --soft:#232d3c;
+  --go:#ff7a2e; --go-ink:#1a1206; --ok:#4fd695; --ok-bg:#143524; --bad:#ff7b7f; --bad-bg:#3d1a1c; --warn:#f3c552; --warn-bg:#3a2e0c; --link:#8db4ff;
+  --shadow:0 6px 24px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --water:#0e2738; --land:#1b232d; --park:#1d3a2a; --road:#33404e; --road2:#27323e; --label:#93a0b3;
+  --pdr:#2bd683; --hin:#ff7d5f;
+  --card:#1a2230; --ink:#eef2f8; --dim:#9daabd; --line:#2d3748; --soft:#232d3c;
+  --go:#ff7a2e; --go-ink:#1a1206; --ok:#4fd695; --ok-bg:#143524; --bad:#ff7b7f; --bad-bg:#3d1a1c; --warn:#f3c552; --warn-bg:#3a2e0c; --link:#8db4ff;
+  --shadow:0 6px 24px rgba(0,0,0,.5); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.app{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.app pre,.app input{-webkit-user-select:text;user-select:text}
+#map *{-webkit-user-select:none;user-select:none}
+#map:focus,.pin:focus{outline:none}
+.pin:focus-visible .body{filter:drop-shadow(0 0 4px var(--link))}
+html,body{height:100%}
+body{background:var(--water);color:var(--ink);font:600 15px/1.45 var(--font);overflow:hidden}
+.app{position:relative;height:100%;min-height:560px;overflow:hidden}
+#map{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;display:block;background:var(--water)}
+#map.placing{cursor:crosshair}
+.lbl{font-family:var(--font);font-weight:800;fill:var(--label);text-anchor:middle;letter-spacing:.06em;text-transform:uppercase;pointer-events:none}
+.st{font-family:var(--font);font-weight:800;fill:var(--dim);pointer-events:none}
+.pin{cursor:pointer}
+.pin .ring{fill:none;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:no-preference){
+  .pin.new .ring{animation:ring 1.6s ease-out infinite}
+  .pin.drop .body{animation:drop .5s cubic-bezier(.2,1.6,.4,1)}
+  .fab{animation:pulse 2.4s ease-in-out infinite}
+  .sheet{animation:up .28s cubic-bezier(.2,.9,.3,1)}
+  .toast{animation:toast 2.2s ease forwards}
+}
+@keyframes ring{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(2.6)}}
+@keyframes drop{0%{transform:translateY(-60px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes pulse{0%,100%{box-shadow:0 8px 24px rgba(255,106,26,.45),0 0 0 0 rgba(255,106,26,.5)}50%{box-shadow:0 8px 24px rgba(255,106,26,.45),0 0 0 16px rgba(255,106,26,0)}}
+@keyframes up{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+@keyframes toast{0%{transform:translate(-50%,10px);opacity:0}12%,80%{transform:translate(-50%,0);opacity:1}100%{transform:translate(-50%,-10px);opacity:0}}
+.top{position:absolute;top:12px;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;pointer-events:none}
+.top>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:18px;padding:8px 16px 8px 10px;box-shadow:var(--shadow)}
+.brand svg{width:38px;height:38px;flex:none}
+.brand b{font-weight:900;font-size:1.35rem;letter-spacing:-.02em;line-height:1}
+.brand span{display:block;font-size:.72rem;color:var(--dim);line-height:1.1}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;justify-content:flex-end}
+.chip{font:800 .8rem var(--font);background:var(--card);color:var(--ink);border:2px solid transparent;border-radius:99px;padding:7px 12px;box-shadow:var(--shadow);cursor:pointer;display:flex;gap:6px;align-items:center}
+.chip i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.chip[aria-pressed="false"]{opacity:.6}
+.chip.stat{cursor:default}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--link);outline-offset:2px}
+.zoom{position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);display:grid;gap:6px}
+.zoom button{width:42px;height:42px;border-radius:14px;border:0;background:var(--card);color:var(--ink);font:900 1.3rem var(--font);box-shadow:var(--shadow);cursor:pointer}
+.fab{position:absolute;right:max(20px,env(safe-area-inset-right,0px));bottom:24px;width:84px;height:84px;border-radius:50%;border:0;background:var(--go);color:var(--go-ink);font:900 .78rem var(--font);cursor:pointer;display:grid;place-items:center;line-height:1.05}
+.fab svg{width:34px;height:34px;display:block;margin:0 auto 1px}
+.sheet{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:84px;width:384px;max-height:calc(100% - 100px);overflow:auto;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:16px;display:grid;gap:12px;align-content:start}
+@media (max-width:820px){
+  .sheet{top:auto;bottom:0;left:0;right:0;width:auto;max-height:64%;border-radius:22px 22px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .fab{display:none}
+  .zoom{top:132px;transform:none}
+  .sheet[data-mode=idle],.sheet[data-mode=placing]{max-height:46%}
+  .chip{font-size:.72rem;padding:6px 10px}
+  .brand span{display:none}
+}
+h2{font:900 1.3rem/1.15 var(--font);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h3{font:800 .72rem var(--font);text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin:0}
+p{margin:0}
+.dim{color:var(--dim);font-size:.88rem}
+.big{font:900 1rem var(--font);border:0;border-radius:16px;padding:14px 16px;background:var(--go);color:var(--go-ink);cursor:pointer;width:100%}
+.big:disabled{opacity:.5;cursor:default}
+.btn{font:800 .88rem var(--font);border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card);color:var(--ink);cursor:pointer}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row .btn{flex:1}
+.x{margin-left:auto;width:34px;height:34px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font:900 1rem var(--font);cursor:pointer;flex:none}
+.head{display:flex;gap:10px;align-items:flex-start}
+.legend{display:grid;gap:8px}
+.legend div{display:flex;gap:10px;align-items:center;font-size:.9rem}
+.sw{width:26px;height:16px;border-radius:5px;flex:none}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{border:2px solid var(--line);background:var(--soft);color:var(--ink);border-radius:18px;padding:10px 4px 8px;cursor:pointer;display:grid;gap:2px;justify-items:center;font:800 .76rem/1.15 var(--font);text-align:center}
+.tile span{font-size:1.7rem;line-height:1.1}
+.tile small{font:500 .6rem var(--mono);color:var(--dim)}
+.tile[aria-pressed="true"]{border-color:var(--bad);background:var(--bad-bg)}
+.loc{display:grid;gap:6px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.88rem;padding:8px 10px;border-radius:12px}
+.chk.bad{background:var(--bad-bg)} .chk.ok{background:var(--ok-bg)} .chk.unk{background:var(--warn-bg)}
+.chk b{font-weight:900}
+.cite{font:500 .72rem var(--mono);color:var(--link);text-decoration:none;white-space:nowrap}
+.cite:hover{text-decoration:underline}
+.verdict{border-radius:16px;padding:12px 14px;font:900 1.25rem/1.15 var(--font)}
+.verdict.bad{background:var(--bad);color:var(--card)} .verdict.ok{background:var(--ok);color:var(--card)}
+.verdict small{display:block;font:800 .8rem var(--font);opacity:.9;margin-top:2px}
+ul.v{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+ul.v li{display:grid;gap:0;border-left:4px solid var(--bad);padding:2px 0 2px 10px;font-size:.9rem}
+ul.v li b{font-weight:900}
+.feed{display:grid;gap:6px}
+.item{display:flex;gap:10px;align-items:center;border:0;background:var(--soft);color:var(--ink);border-radius:14px;padding:9px 12px;cursor:pointer;text-align:left;font:600 .88rem var(--font);width:100%}
+.item .n{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--card);font-weight:900;flex:none}
+.item b{font-weight:900;display:block}
+.tag{font:500 .62rem var(--mono);text-transform:uppercase;letter-spacing:.06em;background:var(--warn-bg);color:var(--warn);padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:middle}
+input.note{font:600 .92rem var(--font);width:100%;padding:11px 12px;border-radius:14px;border:2px solid var(--line);background:var(--soft);color:var(--ink)}
+pre{font:500 .72rem/1.5 var(--mono);background:var(--soft);border-radius:12px;padding:10px;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:150px;overflow:auto}
+details{font-size:.86rem;color:var(--dim)}
+details summary{cursor:pointer;font-weight:800;color:var(--ink)}
+details ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
+.rule{display:grid;gap:1px;padding:8px 0;border-top:1px solid var(--line);font-size:.88rem}
+.rule b{font-weight:900}
+.banner{position:absolute;left:50%;top:84px;transform:translateX(-50%);background:var(--ink);color:var(--card);border-radius:99px;padding:10px 18px;font-weight:800;box-shadow:var(--shadow);white-space:nowrap}
+.toast{position:absolute;left:50%;top:40%;background:var(--ok);color:var(--card);font:900 1.3rem var(--font);border-radius:99px;padding:12px 22px;box-shadow:var(--shadow);pointer-events:none;white-space:nowrap}
+
+.modal{position:absolute;inset:0;background:rgba(10,16,30,.55);display:grid;place-items:center;padding:16px;z-index:5}
+.mcard{background:var(--card);border-radius:24px;box-shadow:var(--shadow);width:min(1240px,100%);max-height:100%;overflow:auto;padding:22px;display:grid;gap:16px}
+.mcard h2{font-size:1.7rem}
+.cols3{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1100px){.cols3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.cols3{grid-template-columns:minmax(0,1fr)}}
+.col{background:var(--soft);border-radius:18px;padding:14px;display:grid;gap:10px;align-content:start}
+.col h3{color:var(--ink);font-size:.82rem}
+.col ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:.9rem}
+.col li{display:grid;gap:1px}
+.step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;font-size:.9rem}
+.step i{width:34px;height:34px;border-radius:50%;background:var(--go);color:var(--go-ink);display:grid;place-items:center;font:900 1rem var(--font);font-style:normal}
+.step b,.col li b{font-weight:900}
+.pts{font:500 .72rem var(--mono);color:var(--ok)} .pts.neg{color:var(--bad)}
+.vote[aria-pressed="true"]{border-color:var(--ink);background:var(--soft)}
+.live{font:800 .72rem var(--font);color:var(--dim);display:flex;gap:6px;align-items:center}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.live.on i{background:var(--ok)}
+</style>
+
+<div class="app" id="app">
+<svg id="map" role="application" aria-label="Map of San Francisco. Tap to place a robot sighting.">
+  <defs>
+    <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="var(--pdr)" opacity=".28"/><rect width="4" height="10" fill="var(--pdr)" opacity=".45"/></pattern>
+    <symbol id="bot" viewBox="0 0 40 40"><rect x="8" y="12" width="24" height="18" rx="6" fill="#fff"/><rect x="18.5" y="5" width="3" height="8" rx="1.5" fill="#fff"/><circle cx="20" cy="5" r="3" fill="#fff"/><circle cx="15" cy="20" r="2.6" fill="#18223a"/><circle cx="25" cy="20" r="2.6" fill="#18223a"/><circle cx="13" cy="32" r="3.4" fill="#fff"/><circle cx="27" cy="32" r="3.4" fill="#fff"/></symbol>
+  </defs>
+  <g id="base"></g><g id="zones"></g><g id="hin"></g><g id="labels"></g><g id="pins"></g>
+</svg>
+
+<div class="top">
+  <div class="brand">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="13" fill="var(--go)"/><use href="#bot"/></svg>
+    <div><b>Yield</b><span>the sidewalk robot map of SF</span></div>
+  </div>
+  <div class="chips">
+    <button class="chip" id="lyPdr" aria-pressed="true" type="button"><i style="background:var(--pdr)"></i>Robot-legal zones</button>
+    <button class="chip" id="lyHin" aria-pressed="true" type="button"><i style="background:var(--hin)"></i>High-injury streets</button>
+    <button class="chip" id="how" type="button" style="background:var(--ink);color:var(--card)">How it works</button>
+    <span class="chip stat" id="stat"></span>
+  </div>
+</div>
+<div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button></div>
+<div class="banner" id="banner" hidden>Tap the map where you saw the robot</div>
+<button class="fab" id="fab" type="button" aria-label="Report a robot"><span><svg viewBox="0 0 40 40" aria-hidden="true"><use href="#bot"/></svg>REPORT</span></button>
+<div class="sheet" id="sheet"></div>
+<div class="modal" id="modal" hidden></div>
+</div>
+
+<script>
+const D = {"source": "San Francisco Public Works Code Sec. 794, Autonomous Delivery Devices", "source_url": "https://codelibrary.amlegal.com/codes/san_francisco/latest/sf_publicworks/0-0-0-48516", "definition": "A motorized device that carries items on City sidewalks for commercial purposes, guided or controlled without a person sitting or standing on it and steering it.", "rules": [{"clause": "794(a)", "who": "resident", "title": "Sidewalks only", "text": "The permit program covers City sidewalks. Streets and highways under SFMTA jurisdiction are outside it.", "check": {"field": "on_sidewalk", "op": "==", "value": true}, "id": "R01"}, {"clause": "794(i)(4)(A)", "who": "resident", "title": "PDR zoning only", "text": "Testing is limited to sidewalks in PDR (Production, Distribution, Repair) zoning districts.", "check": {"field": "zoning_pdr", "op": "==", "value": true}, "id": "R02"}, {"clause": "794(i)(4)(B)", "who": "resident", "title": "Not on a high-injury corridor", "text": "No testing on sidewalks along Vision Zero high-injury corridors.", "check": {"field": "high_injury_corridor", "op": "==", "value": false}, "id": "R03"}, {"clause": "794(i)(4)(C)", "who": "resident", "title": "Room for people with disabilities", "text": "The sidewalk must keep a path of travel for people with disabilities, or have an effective width of at least 6 feet.", "check": {"any": [{"field": "clear_width_ft", "op": ">=", "value": 6}, {"field": "accessible_path", "op": "==", "value": true}]}, "id": "R04"}, {"clause": "794(i)(1)", "who": "resident", "title": "3 mph speed limit", "text": "A device may not go faster than 3 miles per hour.", "check": {"field": "speed_mph", "op": "<=", "value": 3}, "id": "R05"}, {"clause": "794(i)(2)", "who": "resident", "title": "Human operator within 30 feet", "text": "A human operator must stay within 30 feet of the device for the whole test.", "check": {"field": "operator_distance_ft", "op": "<=", "value": 30}, "id": "R06"}, {"clause": "794(i)(3)", "who": "resident", "title": "Yield to pedestrians and bicycles", "text": "Devices must yield the right of way to pedestrians and bicycles.", "check": {"field": "yielded", "op": "==", "value": true}, "id": "R07"}, {"clause": "794(i)(5)", "who": "resident", "title": "Obey signs and signals", "text": "Devices must obey all traffic and pedestrian signs and signals.", "check": {"field": "obeyed_signals", "op": "==", "value": true}, "id": "R08"}, {"clause": "794(i)(7)", "who": "resident", "title": "Headlights in low light", "text": "Headlights must operate at night, sunrise and sunset.", "check": {"any": [{"field": "light", "op": "==", "value": "day"}, {"field": "headlights_on", "op": "==", "value": true}]}, "id": "R09"}, {"clause": "794(i)(8)", "who": "resident", "title": "Warning noise", "text": "A device must emit a warning noise while operating, loud enough for nearby pedestrians and cyclists.", "check": {"field": "warning_noise", "op": "==", "value": true}, "id": "R10"}, {"clause": "794(i)(9)", "who": "resident", "title": "ID and contact details", "text": "Each device must carry a unique identifier with the permittee's contact information.", "check": {"field": "has_id_contact", "op": "==", "value": true}, "id": "R11"}, {"clause": "794(i)(6)", "who": "resident", "title": "No waste or hazardous cargo", "text": "Devices may not carry waste or hazardous materials, including flammables or ammunition.", "check": {"field": "hazardous_cargo", "op": "==", "value": false}, "id": "R12"}, {"clause": "794(i)(12)", "who": "resident", "title": "Docked on private property", "text": "When not in use, a device must be docked on private property, not on the sidewalk or public right of way.", "check": {"field": "idle_on_sidewalk", "op": "==", "value": false}, "id": "R13"}, {"clause": "794(d)(2)", "who": "both", "title": "Three devices per permit", "text": "A permit may cover no more than three devices.", "check": {"field": "devices_same_company", "op": "<=", "value": 3}, "id": "R14"}, {"clause": "794(b)", "who": "both", "title": "Permit required", "text": "Operating a device on a public sidewalk without a permit is unlawful.", "check": {"field": "has_permit", "op": "==", "value": true}, "id": "R15"}, {"clause": "794(a)", "who": "operator", "title": "R&D testing only", "text": "Permits cover research-and-development testing. Every other use is prohibited.", "check": {"field": "rd_only", "op": "==", "value": true}, "id": "R16"}, {"clause": "794(d)(1)", "who": "operator", "title": "180-day term, two extensions", "text": "A permit lasts up to 180 days, with at most two 90-day extensions.", "check": {"all": [{"field": "extensions", "op": "<=", "value": 2}, {"field": "permit_day", "op": "<=", "value": 180, "plus": {"field": "extensions", "times": 90}}]}, "id": "R17"}, {"clause": "794(d)(3)", "who": "operator", "title": "Nine devices citywide", "text": "No more than nine devices may be permitted in the city at one time.", "check": {"field": "citywide_devices", "op": "<=", "value": 9}, "id": "R18"}, {"clause": "794(d)(4)", "who": "operator", "title": "One permit per permittee", "text": "A permittee may hold one permit (a second only under a narrow exception, and it cannot be extended).", "check": {"field": "permits_held", "op": "<=", "value": 1}, "id": "R19"}, {"clause": "794(f)", "who": "operator", "title": "Notice posted for 20 days", "text": "Notice must be posted at the test sites for 20 days.", "check": {"field": "notice_days", "op": ">=", "value": 20}, "id": "R20"}, {"clause": "794(f)", "who": "operator", "title": "Photo proof of notice", "text": "The applicant must submit photo evidence that notice was posted.", "check": {"field": "notice_photo", "op": "==", "value": true}, "id": "R21"}, {"clause": "794(g)(1)", "who": "operator", "title": "Public hearing", "text": "The Director holds a public hearing on every application.", "check": {"field": "hearing_held", "op": "==", "value": true}, "id": "R22"}, {"clause": "794(g)(2)", "who": "operator", "title": "No operating during an appeal", "text": "The permittee may not operate devices while an appeal to the Board of Supervisors is pending.", "check": {"field": "appeal_pending", "op": "==", "value": false}, "id": "R23"}, {"clause": "794(e)(6)", "who": "operator", "title": "Stop procedure on file", "text": "The application must include operations manuals, including how to bring the device to a full stop.", "check": {"field": "stop_manual", "op": "==", "value": true}, "id": "R24"}, {"clause": "794(e)(7)", "who": "operator", "title": "Privacy policy on file", "text": "The application must include a privacy policy for photo, video and other test data.", "check": {"field": "privacy_policy", "op": "==", "value": true}, "id": "R25"}, {"clause": "794(h)(1)", "who": "operator", "title": "Permit conditions met", "text": "The Director may attach safety conditions. Breaking them can mean revocation and a bar on future permits.", "check": {"field": "conditions_met", "op": "==", "value": true}, "id": "R26"}, {"clause": "794(i)(10)", "who": "operator", "title": "Insurance proof on hand", "text": "Proof of general liability, automotive liability and workers' compensation insurance, readily accessible.", "check": {"field": "insurance_proof", "op": "==", "value": true}, "id": "R27"}, {"clause": "794(i)(11)", "who": "operator", "title": "City indemnified", "text": "The permittee must agree to indemnify, defend and hold the City harmless.", "check": {"field": "indemnity", "op": "==", "value": true}, "id": "R28"}, {"clause": "794(i)(13)", "who": "operator", "title": "Site visit allowed", "text": "Public Works must be allowed to observe at least one test session per permit term.", "check": {"field": "site_visit", "op": "==", "value": true}, "id": "R29"}, {"clause": "794(h)(2)(A)", "who": "operator", "title": "Monthly test data", "text": "Test data, including GPS and photos, goes to the City Administrator and Public Works every month.", "check": {"field": "monthly_data", "op": "==", "value": true}, "id": "R30"}, {"clause": "794(h)(2)(B)", "who": "operator", "title": "Monthly business list", "text": "San Francisco businesses using the testing must be disclosed every month.", "check": {"field": "monthly_businesses", "op": "==", "value": true}, "id": "R31"}, {"clause": "794(h)(2)(C)", "who": "operator", "title": "Monthly incident report", "text": "Violations, safety incidents, complaints, malfunctions, tampering and collisions must be reported every month.", "check": {"field": "monthly_incidents", "op": "==", "value": true}, "id": "R32"}], "penalties": [{"clause": "794(k)(1)", "text": "Infraction against the permittee: up to $100, then $200, then $500 for repeat violations within a year. Staff cannot be criminally penalized."}, {"clause": "794(k)(2)", "text": "Civil penalty of up to $500 per day, plus injunction and attorney's fees, through the City Attorney."}, {"clause": "794(k)(3)", "text": "Administrative citation of up to $1,000 per day per violation, issued by Public Works."}, {"clause": "794(h)(1)", "text": "Permit suspension or revocation. Revocation is mandatory for a significant safety risk and bars future permits."}]};
+const URL0 = D.source_url;
+/* ---------- map data: hand-drawn, approximate ---------- */
+const LAND=[[37,973],[30,700],[28,470],[22,330],[30,235],[75,205],[150,195],[240,165],[262,110],[285,42],[330,62],[420,82],[510,84],[580,80],[630,70],[690,68],[750,52],[800,44],[862,80],[895,130],[912,177],[950,232],[962,300],[958,340],[975,352],[968,410],[990,440],[1006,500],[990,560],[984,600],[925,612],[925,624],[990,628],[1030,650],[1072,680],[1100,720],[1150,750],[1188,800],[1150,850],[1120,885],[1060,900],[1045,940],[1027,966],[1010,973]];
+const PARKS=[[[30,364],[465,364],[465,450],[30,450]],[[465,375],[540,375],[540,388],[465,388]],[[245,165],[262,110],[285,50],[330,65],[420,85],[505,88],[505,200],[400,215],[300,205]],[[660,850],[730,835],[770,880],[730,925],[670,910]],[[470,540],[535,535],[545,600],[480,605]]];
+const ROADS=[[[300,450],[300,973]],[[505,130],[694,137]],[[600,609],[975,609]],[[30,520],[480,520]],[[30,640],[470,640]],[[150,205],[150,364]],[[400,215],[400,364]],[[560,84],[560,364]],[[800,60],[800,215]],[[694,200],[895,200]],[[540,388],[540,476]],[[700,395],[800,430],[830,520],[820,640],[850,760],[880,940]],[[600,700],[900,700]],[[420,760],[860,800]]];
+const HIN=[{n:"Market St",p:[[910,177],[600,476],[540,540]]},{n:"Mission St",p:[[925,200],[716,377],[720,455],[716,609],[667,727],[600,845],[525,973]]},{n:"Van Ness Ave",p:[[694,75],[694,372],[712,380],[705,609]]},{n:"Geary Blvd",p:[[60,305],[700,262],[836,247]]},{n:"3rd St",p:[[836,247],[919,355],[945,455],[945,609],[934,727],[904,845],[866,945]]},{n:"16th St",p:[[600,455],[975,455]]},{n:"6th St",p:[[805,275],[868,335]]}];
+const PDR=[{n:"Bayview",p:[[925,628],[990,632],[1068,684],[1095,725],[1040,790],[960,800],[940,730],[925,680]]},{n:"Dogpatch",p:[[948,468],[1002,500],[988,600],[948,600]]},{n:"Showplace Square",p:[[770,440],[905,440],[905,470],[860,500],[770,490]]},{n:"Bayshore",p:[[800,625],[905,625],[900,700],[850,760],[810,720]]},{n:"West SoMa",p:[[770,345],[830,375],[800,410],[745,378]]}];
+const HOODS=[["Richmond",200,290],["Sunset",190,590],["Presidio",370,140],["Marina",600,112],["Pacific Heights",610,215],["North Beach",810,120],["Downtown",850,215],["SoMa",860,310],["Haight",560,425],["Castro",590,505],["Mission",735,530],["Potrero Hill",875,535],["Dogpatch",1040,545],["Noe Valley",610,620],["Bernal Heights",735,675],["Bayview",1000,830],["Excelsior",600,900],["Golden Gate Park",245,410],["Lake Merced",150,900],["Hunters Point",1110,800],["Mission Bay",915,405],["Western Addition",620,305],["Twin Peaks",505,575],["Parkside",200,760],["Visitacion Valley",860,960]];
+/* ---------- what you can report: each tile is one clause ---------- */
+const TILES=[
+ {id:"speed",e:"💨",t:"Too fast",c:"794(i)(1)",r:"Faster than the 3 mph limit (a slow walk)"},
+ {id:"nohuman",e:"👻",t:"No human nearby",c:"794(i)(2)",r:"No human operator within 30 feet"},
+ {id:"noyield",e:"🚸",t:"Didn't yield",c:"794(i)(3)",r:"Did not yield to a pedestrian or cyclist"},
+ {id:"blocked",e:"🚧",t:"Blocked the path",c:"794(i)(4)(C)",r:"Left no accessible path or 6 feet of clear sidewalk"},
+ {id:"signal",e:"🚦",t:"Ran a signal",c:"794(i)(5)",r:"Ignored a traffic or pedestrian signal or sign"},
+ {id:"dark",e:"🔦",t:"No lights",c:"794(i)(7)",r:"No headlights at night, sunrise or sunset"},
+ {id:"silent",e:"🔇",t:"No warning sound",c:"794(i)(8)",r:"No audible warning while moving"},
+ {id:"noid",e:"🏷️",t:"No ID on it",c:"794(i)(9)",r:"No unique ID or operator contact details shown"},
+ {id:"parked",e:"🅿️",t:"Left on sidewalk",c:"794(i)(12)",r:"Parked on the sidewalk instead of docked on private property"},
+ {id:"road",e:"🛣️",t:"In the road",c:"794(a)",r:"Operating in the roadway, outside the sidewalk permit program"},
+ {id:"many",e:"🤖",t:"More than 3",c:"794(d)(2)",r:"More than three devices from one operator"},
+ {id:"cargo",e:"☢️",t:"Risky cargo",c:"794(i)(6)",r:"Carrying waste or hazardous materials"}
+];
+const TMAP=Object.fromEntries(TILES.map(t=>[t.id,t]));
+/* ---------- geometry ---------- */
+function inPoly(x,y,p){let c=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const[a,b]=p[i],[e,f]=p[j];if((b>y)!==(f>y)&&x<(e-a)*(y-b)/(f-b)+a)c=!c}return c}
+function dSeg(x,y,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)}
+function locate(x,y){
+  const zone=PDR.find(z=>inPoly(x,y,z.p));
+  let hin=null;for(const h of HIN)for(let i=1;i<h.p.length;i++)if(dSeg(x,y,h.p[i-1],h.p[i])<11){hin=h;break}
+  let hood=HOODS[0],bd=1e9;for(const h of HOODS){const d=Math.hypot(x-h[1],y-h[2]);if(d<bd){bd=d;hood=h}}
+  return {onLand:inPoly(x,y,LAND),zone:zone?zone.n:null,hin:hin?hin.n:null,hood:hood[0]};
+}
+function violations(r){
+  const L=locate(r.x,r.y),v=[];
+  if(!L.zone)v.push({c:"794(i)(4)(A)",t:"Outside a robot-legal zone",r:"Testing is only allowed on sidewalks in PDR (industrial) zoning districts",map:1});
+  if(L.hin)v.push({c:"794(i)(4)(B)",t:"On a high-injury street",r:"No testing along Vision Zero high-injury corridors ("+L.hin+")",map:1});
+  for(const id of r.tiles||[])if(TMAP[id])v.push({c:TMAP[id].c,t:TMAP[id].t,r:TMAP[id].r});
+  return {L,v};
+}
+/* ---------- state ---------- */
+const DEMO=[
+ {id:"d1",demo:1,by:"da",x:688,y:500,tiles:["speed","nohuman","noyield"],note:"Came up behind me faster than I walk, nobody with it.",t:Date.now()-36e5},
+ {id:"d2",demo:1,by:"db",x:952,y:518,tiles:["noid"],note:"No markings, rolling along 3rd St.",t:Date.now()-72e5},
+ {id:"d3",demo:1,by:"da",x:967,y:673,tiles:[],note:"Slow, operator walking beside it, ID plate visible.",t:Date.now()-108e5},
+ {id:"d4",demo:1,by:"dz",x:205,y:640,tiles:["many","cargo","speed","signal"],note:"Ten robots racing with fireworks on board!!",t:Date.now()-150e5}
+];
+let mine=[];try{mine=JSON.parse(localStorage.getItem("yield.reports")||"[]")}catch(e){}
+let shared=[], live=false, canShare=true;
+const S={mode:"idle",draft:null,sel:null,asData:false,newId:null};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cite=c=>`<a class="cite" href="${URL0}" target="_blank" rel="noopener">§${c}</a>`;
+function all(){const ids=new Set(mine.map(r=>r.id));return [...DEMO,...shared.filter(r=>!ids.has(r.id)),...mine.map(r=>({...r,by:ME}))]}
+/* ---------- community feedback loop: scores are recomputed from the public record ---------- */
+const SEED={dv1:2.5,dv2:2.5,dv3:1};
+const DEMOV={d1:{dv1:1,dv2:1,dv3:1},d2:{dv1:1},d3:{dv2:1,dv3:1},d4:{dv1:-1,dv2:-1}};
+let ME="me-local",myVotes={},remoteVotes={},SC=null;
+try{myVotes=JSON.parse(localStorage.getItem("yield.votes")||"{}")}catch(e){}
+const wOf=t=>t>=4?1.5:t>=2?1:.5;
+const tier=t=>t>=4?"Block Guardian":t>=2?"Trusted neighbor":"New neighbor";
+const trustOf=u=>SC.T[u]??SEED[u]??1;
+function score(){
+  const rs=all().slice().sort((a,b)=>a.t-b.t),votes={};
+  for(const r in DEMOV)votes[r]={...DEMOV[r]};
+  for(const u in remoteVotes)if(u!==ME)for(const r in remoteVotes[u]){const v=remoteVotes[u][r];if(v===1||v===-1)(votes[r]??={})[u]=v}
+  for(const r in myVotes)(votes[r]??={})[ME]=myVotes[r];
+  const day={},cap={};for(const r of rs){const k=r.by+"|"+new Date(r.t).toDateString();day[k]=(day[k]||0)+1;cap[r.id]=day[k]>5}
+  let T={},out;
+  for(let i=0;i<3;i++){
+    const st={},agg={},g=u=>agg[u]??={v:0,x:0,a:0};
+    for(const r of rs){let c=0,x=0,nc=0,nx=0;const vs=votes[r.id]||{};
+      for(const u in vs){if(u===r.by)continue;const w=wOf(T[u]??SEED[u]??1);if(vs[u]>0){c+=w;nc++}else{x+=w;nx++}}
+      const s=(c-x>=1.5&&nc>=2)?"verified":(x-c>=1.5&&nx>=2)?"disputed":"open";st[r.id]={c,x,nc,nx,s,cap:cap[r.id]};
+      if(s==="open")continue;
+      if(s==="verified"){if(!cap[r.id])g(r.by).v++}else g(r.by).x++;
+      for(const u in vs)if(u!==r.by&&(vs[u]>0)===(s==="verified"))g(u).a++}
+    T={};for(const u in agg)T[u]=Math.max(0,Math.min(5,(SEED[u]??1)+.5*agg[u].v-agg[u].x+.1*agg[u].a));
+    out={st,agg,T};
+  }
+  return out;
+}
+function myStats(){const a=SC.agg[ME]||{v:0,x:0,a:0};return {pts:Math.max(0,10*a.v-10*a.x+2*a.a),trust:trustOf(ME)}}
+const STLBL={verified:"verified",disputed:"disputed",open:"unverified"};
+const ago=t=>{const m=Math.max(1,Math.round((Date.now()-t)/6e4));return m<60?m+" min ago":Math.round(m/60)+" hr ago"};
+/* ---------- map ---------- */
+const svg=$("#map"),NS="http://www.w3.org/2000/svg";
+const pts=p=>p.map(q=>q.join(",")).join(" ");
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e}
+(function draw(){
+  const b=$("#base");
+  el("polygon",{points:pts(LAND),fill:"var(--land)",stroke:"var(--road2)","stroke-width":2,"stroke-linejoin":"round"},b);
+  PARKS.forEach(p=>el("polygon",{points:pts(p),fill:"var(--park)","stroke-linejoin":"round",stroke:"var(--park)","stroke-width":6},b));
+  el("ellipse",{cx:150,cy:860,rx:55,ry:36,fill:"var(--water)"},b);
+  ROADS.forEach(p=>el("polyline",{points:pts(p),fill:"none",stroke:"var(--road2)","stroke-width":5,"stroke-linecap":"round","stroke-linejoin":"round"},b));
+  HIN.forEach(h=>{el("polyline",{points:pts(h.p),fill:"none",stroke:"var(--road2)","stroke-width":11,"stroke-linecap":"round","stroke-linejoin":"round"},b);el("polyline",{points:pts(h.p),fill:"none",stroke:"var(--road)","stroke-width":7,"stroke-linecap":"round","stroke-linejoin":"round"},b)});
+  PDR.forEach(z=>el("polygon",{points:pts(z.p),fill:"url(#hatch)",stroke:"var(--pdr)","stroke-width":3,"stroke-linejoin":"round"},$("#zones")));
+  HIN.forEach(h=>el("polyline",{points:pts(h.p),fill:"none",stroke:"var(--hin)","stroke-width":4,"stroke-dasharray":"2 9","stroke-linecap":"round"},$("#hin")));
+  HOODS.forEach(h=>{const t=el("text",{x:h[1],y:h[2],class:"lbl"},$("#labels"));t.textContent=h[0]});
+})();
+const V={x:-30,y:-30,w:1260};
+function size(){return svg.getBoundingClientRect()}
+function applyView(){
+  const r=size(),h=V.w*r.height/r.width,k=V.w/r.width;
+  svg.setAttribute("viewBox",`${V.x} ${V.y} ${V.w} ${h}`);
+  $("#labels").style.fontSize=(10.5*k)+"px";
+  document.querySelectorAll(".pin").forEach(p=>p.setAttribute("transform",`translate(${p.dataset.x},${p.dataset.y}) scale(${k})`));
+}
+function fit(){
+  const r=size(),a=r.width/r.height;
+  if(r.width<=820){V.w=760;V.x=860-V.w/2;V.y=500-(V.w/a)*0.36}
+  else{V.w=Math.max(1330,1080*a);const pad=(r.width>820?410:0)*V.w/r.width;V.x=600-(V.w+pad)/2;V.y=500-(V.w/a)/2}
+  applyView();
+}
+function zoom(f,cx,cy){const r=size(),h=V.w/r.width*r.height;cx??=V.x+V.w/2;cy??=V.y+h/2;const w=Math.max(160,Math.min(2600,V.w*f)),g=w/V.w;V.x=cx-(cx-V.x)*g;V.y=cy-(cy-V.y)*g;V.w=w;applyView()}
+function toMap(e){const r=size(),k=V.w/r.width;return [V.x+(e.clientX-r.left)*k,V.y+(e.clientY-r.top)*k]}
+const ptrs=new Map();let moved=0,pinch=0;
+svg.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse")e.preventDefault();getSelection()?.removeAllRanges();ptrs.set(e.pointerId,e);moved=0;if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}try{svg.setPointerCapture(e.pointerId)}catch(_){}} );
+svg.addEventListener("pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p)return;
+  if(ptrs.size===2){ptrs.set(e.pointerId,e);const[a,b]=[...ptrs.values()],d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pinch){const m=toMap({clientX:(a.clientX+b.clientX)/2,clientY:(a.clientY+b.clientY)/2});zoom(pinch/d,m[0],m[1])}pinch=d;moved=99;return}
+  const k=V.w/size().width,dx=e.clientX-p.clientX,dy=e.clientY-p.clientY;moved+=Math.abs(dx)+Math.abs(dy);V.x-=dx*k;V.y-=dy*k;ptrs.set(e.pointerId,e);applyView()});
+function up(e){const had=ptrs.delete(e.pointerId);pinch=0;if(!had||moved>8||e.type!=="pointerup")return;
+  const pin=e.target.closest&&e.target.closest(".pin");
+  if(pin&&pin.dataset.id!=="draft"){S.sel=pin.dataset.id;S.mode="card";S.draft=null;render();return}
+  const[x,y]=toMap(e);startDraft(x,y)}
+svg.addEventListener("pointerup",up);svg.addEventListener("pointercancel",up);
+svg.addEventListener("wheel",e=>{e.preventDefault();const m=toMap(e);zoom(e.deltaY>0?1.15:.87,m[0],m[1])},{passive:false});
+$("#zin").onclick=()=>zoom(.7);$("#zout").onclick=()=>zoom(1.4);
+addEventListener("resize",applyView);
+function drawPins(){
+  const g=$("#pins");g.innerHTML="";
+  const list=all().map(r=>({r,n:violations(r).v.length,s:SC.st[r.id]?.s}));
+  if(S.draft)list.push({r:{id:"draft",x:S.draft.x,y:S.draft.y},n:-1});
+  for(const{r,n,s}of list){
+    const col=n<0?"var(--link)":s==="disputed"?"var(--label)":n?"var(--bad)":"var(--ok)";
+    const p=el("g",{class:"pin"+(r.id===S.newId||r.id==="draft"?" new drop":"")+(r.id===S.sel?" new":""),"data-id":r.id,"data-x":r.x,"data-y":r.y,tabindex:0,role:"button","aria-label":n<0?"New sighting":n+" rules broken"},g);
+    el("circle",{class:"ring",r:20,stroke:col},p);
+    const b=el("g",{class:"body",opacity:s==="open"?.62:1},p);
+    el("path",{d:"M0 6 C-14 -12 -20 -18 -20 -30 a20 20 0 1 1 40 0 C20 -18 14 -12 0 6Z",fill:col,stroke:"#fff","stroke-width":3},b);
+    el("use",{href:"#bot",x:-15,y:-46,width:30,height:30},b);
+    if(n>0){el("circle",{cx:17,cy:-46,r:11,fill:"#fff"},b);const t=el("text",{x:17,y:-41.5,"text-anchor":"middle","font-family":"Nunito,sans-serif","font-weight":900,"font-size":13,fill:"#e2343a"},b);t.textContent=n}
+    if(s==="verified"){el("circle",{cx:-17,cy:-46,r:10,fill:"#fff"},b);const c=el("text",{x:-17,y:-41.5,"text-anchor":"middle","font-weight":900,"font-size":13,fill:"#0f9d58"},b);c.textContent="✓"}
+    p.addEventListener("keydown",e=>{if(e.key==="Enter"&&r.id!=="draft"){S.sel=r.id;S.mode="card";render()}});
+  }
+  applyView();
+}
+/* ---------- flow ---------- */
+function startDraft(x,y){S.draft={x,y,tiles:[],note:""};S.sel=null;S.mode="pick";render()}
+function reportText(r){
+  const{L,v}=violations(r);
+  if(S.asData)return JSON.stringify({reported_at:new Date(r.t).toISOString(),map_x:Math.round(r.x),map_y:Math.round(r.y),neighborhood:L.hood,pdr_zone:L.zone,high_injury_street:L.hin,observed:r.tiles,note:r.note,violations:v.map(z=>"SF PWC §"+z.c)},null,1);
+  return `Sidewalk delivery robot report (SF Public Works Code §794)
+When: ${new Date(r.t).toLocaleString()}
+Where: ${L.hood}${L.hin?", on "+L.hin:""} (confirm the exact address)
+${r.note?"\n"+r.note+"\n":""}
+Apparent violations:
+${v.length?v.map(z=>`- §${z.c} ${z.r}`).join("\n"):"- none observed"}
+
+Please confirm whether this operator holds a current §794 permit and log this complaint in its monthly incident report under §794(h)(2)(C).`;
+}
+function sheetIdle(){
+  const list=all().slice().sort((a,b)=>b.t-a.t);
+  return `<div><h2>Robots are only legal in the green zones.</h2></div>
+  <p class="dim">San Francisco allows sidewalk delivery robots as permitted tests only: 9 citywide, 3 mph, a human within 30 ft. Tap the map where you saw one and Yield checks it against the law.</p>
+  <button class="big" data-act="place" type="button">Report a robot</button>
+  <div class="legend">
+    <div><span class="sw" style="background:var(--pdr);opacity:.7"></span>Robot-legal zone (PDR zoning) ${cite("794(i)(4)(A)")}</div>
+    <div><span class="sw" style="background:repeating-linear-gradient(90deg,var(--hin) 0 4px,transparent 4px 9px)"></span>High-injury street, never legal ${cite("794(i)(4)(B)")}</div>
+  </div>
+  <h3>Latest sightings</h3>
+  <div class="feed">${list.map(r=>{const{L,v}=violations(r);return `<button class="item" data-act="open" data-id="${esc(r.id)}" type="button"><span class="n" style="background:${v.length?"var(--bad)":"var(--ok)"}">${v.length}</span><span><b>${esc(L.hood)}${r.demo?'<span class="tag">demo</span>':""}<span class="tag" style="background:var(--soft);color:var(--dim)">${STLBL[SC.st[r.id].s]}</span></b>${v.length?esc(v.slice(0,2).map(z=>z.t).join(", "))+(v.length>2?" +"+(v.length-2):""):"Looks allowed"} · ${ago(r.t)}</span></button>`}).join("")}</div>
+  <div class="live ${live?"on":""}"><i></i>${live?"Live: sightings are shared with everyone who can contribute to this page":"Sightings you add are saved on this device"}</div>
+  <div class="row"><button class="btn" data-act="how" type="button">How it works</button><button class="btn" data-act="rules" type="button">All ${D.rules.length} rules</button></div>
+  <details><summary>What this map can't tell you</summary><ul>
+    <li>The map is hand-drawn. Zones and high-injury streets are approximate, so confirm on the City's zoning and Vision Zero maps before relying on a location check.</li>
+    <li>Speed and distance are judged by eye. A sighting is a reason to report, not proof.</li>
+    <li>Whether an operator holds a current permit. Only Public Works can confirm that.</li>
+    <li>How often robots really break the rules. Operators report incidents to the City monthly under §794(h)(2)(C), and none of it is published.</li>
+    <li>Pins and reviews marked demo are examples we wrote, not real sightings.</li>
+    <li>Whether two accounts are one person. Half-weight reviews for new accounts slow that down but do not stop it.</li></ul></details>`;
+}
+function locBlock(L){
+  return `<div class="loc">
+   <div class="chk ${L.zone?"ok":"bad"}"><span>${L.zone?"✅":"⛔"}</span><span><b>${L.zone?"Inside a robot-legal zone ("+esc(L.zone)+")":"Outside every robot-legal zone"}</b><br>${L.zone?"Testing can be permitted here.":"Robots can't be permitted to test here at all."} ${cite("794(i)(4)(A)")}</span></div>
+   <div class="chk ${L.hin?"bad":"ok"}"><span>${L.hin?"⛔":"✅"}</span><span><b>${L.hin?"On a high-injury street: "+esc(L.hin):"Not on a high-injury street"}</b> ${cite("794(i)(4)(B)")}</span></div>
+  </div>`;
+}
+function sheetPick(){
+  const d=S.draft,{L,v}=violations(d);
+  return `<div class="head"><div><h3>${esc(L.hood)}${L.onLand?"":" (that looks like water)"}</h3><h2>What did you see?</h2></div><button class="x" data-act="close" aria-label="Close" type="button">✕</button></div>
+  ${locBlock(L)}
+  <div class="tiles">${TILES.map(t=>`<button class="tile" type="button" data-act="tile" data-id="${t.id}" aria-pressed="${d.tiles.includes(t.id)}"><span>${t.e}</span>${t.t}<small>§${t.c}</small></button>`).join("")}</div>
+  <input class="note" id="note" maxlength="200" placeholder="Add a detail (optional)" value="${esc(d.note)}" aria-label="Detail">
+  <button class="big" data-act="send" type="button">${v.length?`Report ${v.length} broken rule${v.length>1?"s":""}`:"Log it as allowed"}</button>
+  <p class="dim">Map checks are approximate. Nothing is sent to the City from here.</p>`;
+}
+function sheetCard(){
+  const r=all().find(z=>z.id===S.sel);if(!r){S.mode="idle";return sheetIdle()}
+  const{L,v}=violations(r);
+  return `<div class="head"><div><h3>${esc(L.hood)} · ${ago(r.t)}${r.demo?'<span class="tag">demo</span>':""}</h3></div><button class="x" data-act="close" aria-label="Close" type="button">✕</button></div>
+  <div class="verdict ${v.length?"bad":"ok"}">${v.length?`Not allowed. ${v.length} rule${v.length>1?"s":""} broken.`:"Looks allowed here."}<small>${v.length?`Each can draw a citation of up to $1,000 a day (§794(k)(3))`:"No violations observed. Permit status still needs checking."}</small></div>
+  ${(()=>{const s=SC.st[r.id];return s.s==="verified"?`<div class="chk ok"><span>✅</span><span><b>Community verified.</b> ${s.nc} neighbors confirmed it. Reporter: ${tier(trustOf(r.by))}.</span></div>`:s.s==="disputed"?`<div class="chk bad"><span>🚫</span><span><b>Disputed.</b> ${s.nx} neighbors say it doesn't look right. It no longer counts, and the reporter lost 10 points.</span></div>`:`<div class="chk unk"><span>⏳</span><span><b>Unverified.</b> Needs 2 or more neighbors to confirm (${s.nc} so far). Reporter: ${tier(trustOf(r.by))}.</span></div>`})()}
+  ${r.by===ME?`<p class="dim">You can't review your own sighting. It earns points only if neighbors confirm it.</p>`:`<div class="row"><button class="btn vote" data-act="vote" data-v="1" aria-pressed="${myVotes[r.id]===1}" type="button">👍 I saw it too</button><button class="btn vote" data-act="vote" data-v="-1" aria-pressed="${myVotes[r.id]===-1}" type="button">👎 Doesn't look right</button></div>`}
+  ${r.note?`<p>“${esc(r.note)}”</p>`:""}
+  ${v.length?`<ul class="v">${v.map(z=>`<li><span>${cite(z.c)} <b>${esc(z.t)}</b></span><span class="dim">${esc(z.r)}${z.map?" (by this approximate map)":""}</span></li>`).join("")}</ul>`:""}
+  <div class="chk unk"><span>❓</span><span><b>Permit not verified.</b> Ask 311 whether the operator holds one. ${cite("794(b)")}</span></div>
+  <pre id="out">${esc(reportText(r))}</pre>
+  <div class="row"><button class="btn" data-act="copy" type="button" style="background:var(--go);color:var(--go-ink);border-color:var(--go)">Copy 311 report</button><button class="btn" data-act="fmt" type="button">${S.asData?"As text":"As data"}</button></div>
+  <p class="dim" id="msg">File it with SF311: call 311, use the SF311 app or sf311.org and ask for Public Works. If someone is hurt, call 911.</p>`;
+}
+function sheetRules(){
+  return `<div class="head"><div><h3>SF Public Works Code §794</h3><h2>All ${D.rules.length} rules</h2></div><button class="x" data-act="close" aria-label="Close" type="button">✕</button></div>
+  <p class="dim">${esc(D.definition)}</p>
+  <div>${D.rules.map(r=>`<div class="rule"><span>${cite(r.clause)} <b>${esc(r.title)}</b></span><span class="dim">${esc(r.text)}</span></div>`).join("")}</div>
+  <h3>Penalties</h3><div>${D.penalties.map(p=>`<div class="rule"><span>${cite(p.clause)}</span><span class="dim">${esc(p.text)}</span></div>`).join("")}</div>`;
+}
+function render(){
+  SC=score();
+  $("#sheet").hidden=S.mode==="placing"&&innerWidth<=820;
+  $("#sheet").innerHTML=S.mode==="pick"?sheetPick():S.mode==="card"?sheetCard():S.mode==="rules"?sheetRules():sheetIdle();
+  $("#sheet").scrollTop=0;
+  $("#banner").hidden=S.mode!=="placing";svg.classList.toggle("placing",S.mode==="placing");
+  $("#fab").hidden=S.mode==="pick";
+  const me=myStats();$("#stat").textContent=`${me.pts} pts`+(innerWidth>820?` · ${tier(me.trust)}`:"");$("#sheet").dataset.mode=S.mode;
+  drawPins();
+}
+function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;$("#app").appendChild(e);setTimeout(()=>e.remove(),2300)}
+function save(){try{localStorage.setItem("yield.reports",JSON.stringify(mine))}catch(e){}}
+let dbRef=null;
+async function send(){
+  const d=S.draft,r={id:"r"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),x:Math.round(d.x),y:Math.round(d.y),tiles:d.tiles.slice(),note:d.note.trim().slice(0,200),t:Date.now()};
+  mine.push(r);save();S.draft=null;S.sel=r.id;S.newId=r.id;S.mode="card";render();
+  toast("Logged. Points come when neighbors confirm it.");
+  if(dbRef&&canShare){try{await dbRef.doc(r.id).set({x:r.x,y:r.y,tiles:r.tiles,note:r.note,t:r.t,by:ME})}catch(e){canShare=false}}
+}
+$("#sheet").addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
+  if(a==="place"){S.mode="placing";S.draft=null;S.sel=null;render()}
+  else if(a==="close"){S.mode="idle";S.draft=null;S.sel=null;render()}
+  else if(a==="tile"){const t=S.draft.tiles,i=t.indexOf(b.dataset.id);i<0?t.push(b.dataset.id):t.splice(i,1);S.draft.note=$("#note").value;const top=$("#sheet").scrollTop;render();$("#sheet").scrollTop=top}
+  else if(a==="send"){S.draft.note=$("#note").value;send()}
+  else if(a==="open"){S.sel=b.dataset.id;S.mode="card";render()}
+  else if(a==="rules"){S.mode="rules";render()}
+  else if(a==="fmt"){S.asData=!S.asData;render()}
+  else if(a==="how"){showHow()}
+  else if(a==="vote"){const id=S.sel,v=+b.dataset.v,was=SC.st[id]?.s;if(myVotes[id]===v)delete myVotes[id];else myVotes[id]=v;try{localStorage.setItem("yield.votes",JSON.stringify(myVotes))}catch(e){}
+    render();const now=SC.st[id]?.s;if(now!==was&&now!=="open")toast(now==="verified"?"Community verified ✓":"Marked as disputed");pushVotes()}
+  else if(a==="copy"){const t=$("#out").textContent;navigator.clipboard.writeText(t).then(()=>{$("#msg").textContent="Copied. Paste it into SF311."}).catch(()=>{const g=document.createRange();g.selectNodeContents($("#out"));const s=getSelection();s.removeAllRanges();s.addRange(g);$("#msg").textContent="Selected. Press Ctrl or Cmd+C to copy."})}
+});
+$("#fab").onclick=()=>{S.mode="placing";S.draft=null;S.sel=null;render()};
+for(const[id,g]of[["lyPdr","zones"],["lyHin","hin"]])$("#"+id).onclick=e=>{const b=e.currentTarget,on=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",on);$("#"+g).style.display=on?"":"none"};
+let voteDoc=null,voteBusy=false,voteDirty=false;
+async function pushVotes(){if(!voteDoc)return;if(voteBusy){voteDirty=true;return}voteBusy=true;try{await voteDoc.set({v:{...myVotes}})}catch(e){voteDoc=null}voteBusy=false;if(voteDirty){voteDirty=false;pushVotes()}}
+const LAW=[["Permit first","No Public Works testing permit, no robot on the sidewalk.","794(b)"],["Only in the right place","Industrial (PDR) zones only, never on high-injury streets, and only where 6 ft or an accessible path stays clear.","794(i)(4)"],["Slow, supervised, polite","3 mph max, a human within 30 ft, and it always yields to people.","794(i)(1)-(3)"],["Few of them","At most 3 robots per permit and 9 in the whole city.","794(d)"],["Operators must tell the City","Incidents and complaints are reported every month. None of it is public.","794(h)(2)(C)"],["Real penalties","Up to $1,000 per day per violation, and permits can be revoked.","794(k)"]];
+const LOOP=[["Report","Tap the map and pick what you saw.","0 pts for posting"],["Review","Neighbors confirm or dispute it. Nobody reviews their own.","reviews from new accounts count half"],["Reward","Confirmed by 2 or more neighbors: the reporter earns points, and so does everyone who reviewed it correctly.","+10 reporter, +2 reviewer"],["Trust","Trust rises with confirmed work and makes your reviews count more. Disputed reports cost you.","-10 pts and -1 trust if disputed"]];
+const FAIR=["Posting earns nothing. Only confirmation by other people does.","A confirmed \"looks allowed\" pays the same as a confirmed violation, so there is no bounty for accusing.","You can't review your own sighting, and you get one review per sighting.","A sighting needs 2 or more confirmers and enough combined trust (1.5) to count.","New accounts' reviews count 0.5, trusted 1, guardians 1.5.","Only your first 5 sightings a day can earn points.","Points are reputation only. There is nothing to cash out, so nothing to farm.","Scores are recomputed in the open from the public record, so anyone can audit them."];
+const FUND=[["Operators pay in","Every permitted operator pays the same flat fee per robot each month. Example: $250 a robot, so at most $2,250 a month with the 9-robot cap."],["Paying buys nothing","The fee is the same whether an operator is reported or not, and gives no say over sightings, reviews or scores."],["What it pays for","Running and improving this map, accessibility audits by disability groups in robot zones, and publishing incident data openly."],["Never paid per report","Neighbors are not paid for sightings, so the fair-play rules still hold. Trusted neighbors vote on small neighborhood grants."],["Open ledger","Every dollar in and out is listed publicly, next to the map."]];
+function showHow(){
+  $("#modal").hidden=false;
+  $("#modal").innerHTML=`<div class="mcard" role="dialog" aria-label="How Yield works"><div class="head"><div><h3>For the room</h3><h2>How Yield works</h2></div><button class="x" data-close type="button" aria-label="Close">✕</button></div>
+  <div class="cols3">
+   <div class="col"><h3>1 · The law the map enforces</h3><ul>${LAW.map(l=>`<li><b>${l[0]}</b><span>${l[1]} ${cite(l[2])}</span></li>`).join("")}</ul></div>
+   <div class="col"><h3>2 · The feedback loop</h3>${LOOP.map((l,i)=>`<div class="step"><i>${i+1}</i><div><b>${l[0]}</b><br>${l[1]}<br><span class="pts ${i===3?"neg":""}">${l[2]}</span></div></div>`).join("")}<p class="dim">Like human-feedback training for AI, but for people: the community's reviews are the reward signal.</p></div>
+   <div class="col"><h3>3 · Fair-play rules</h3><ul>${FAIR.map(f=>`<li>${f}</li>`).join("")}</ul></div>
+   <div class="col"><h3>4 · The Sidewalk Fund <span class="tag">proposal</span></h3><ul>${FUND.map(l=>`<li><b>${l[0]}</b><span>${l[1]}</span></li>`).join("")}</ul><p class="dim">Not live: no money moves through this page and the fee is an example. It would need the City to adopt it, for instance as a permit condition under ${cite("794(h)(1)")}.</p></div>
+  </div>
+  <p class="dim"><b>What it can't stop:</b> one person running several accounts, or a group agreeing to confirm each other. Half-weight reviews, the two-confirmer rule and the daily cap raise the cost but don't remove it. Verified means neighbors agree, not that the City has confirmed a violation. A fund paid by operators is a conflict of interest unless the flat fee and open ledger are enforced by someone independent.</p></div>`;
+}
+$("#how").onclick=showHow;
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal"||e.target.closest("[data-close]"))$("#modal").hidden=true});
+fit();render();
+/* ---------- shared sightings (lights up when the viewer can use the store) ---------- */
+(async()=>{
+  const db=await (window.claude?.use?.("db")??null);if(!db)return;
+  try{const user=await window.claude.use("user"),id=user&&await user.id();if(id){ME=id;voteDoc=db.doc("votes/"+id);
+    db.collection("votes").limit(500).onSnapshot(s=>{remoteVotes={};for(const d of s.docs){const v=(d.data()||{}).v;if(v&&typeof v==="object")remoteVotes[d.id]=v}if(S.mode==="idle"||S.mode==="card")render()},()=>{});
+    if(Object.keys(myVotes).length)pushVotes();render()}}catch(e){}
+  dbRef=db.collection("reports");
+  dbRef.orderBy("t","desc").limit(200).onSnapshot(s=>{
+    shared=s.docs.map(d=>{const v=d.data()||{};return {id:d.id,x:+v.x,y:+v.y,tiles:Array.isArray(v.tiles)?v.tiles.filter(t=>TMAP[t]).slice(0,12):[],note:typeof v.note==="string"?v.note.slice(0,200):"",t:+v.t||Date.now(),by:typeof v.by==="string"?v.by.slice(0,40):"anon"}}).filter(r=>r.x>-50&&r.x<1300&&r.y>-50&&r.y<1100);
+    live=true;if(S.mode==="idle")render();else{SC=score();drawPins()}
+  },()=>{live=false});
+})();
+</script>
