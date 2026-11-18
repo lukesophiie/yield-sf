@@ -1,0 +1,23 @@
+{
+ "_note": "Illustrative example, not a real operator",
+ "has_permit": true,
+ "rd_only": true,
+ "permit_day": 200,
+ "extensions": 0,
+ "devices_same_company": 3,
+ "citywide_devices": 9,
+ "permits_held": 1,
+ "notice_days": 20,
+ "notice_photo": true,
+ "hearing_held": true,
+ "appeal_pending": false,
+ "stop_manual": true,
+ "privacy_policy": true,
+ "conditions_met": true,
+ "insurance_proof": true,
+ "indemnity": true,
+ "site_visit": true,
+ "monthly_data": true,
+ "monthly_businesses": true,
+ "monthly_incidents": false
+}

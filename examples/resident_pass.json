@@ -1,0 +1,18 @@
+{
+ "_note": "Illustrative example, not a real sighting",
+ "on_sidewalk": true,
+ "zoning_pdr": true,
+ "high_injury_corridor": false,
+ "clear_width_ft": 8,
+ "speed_mph": 2,
+ "operator_distance_ft": 5,
+ "yielded": true,
+ "obeyed_signals": true,
+ "light": "day",
+ "warning_noise": true,
+ "has_id_contact": true,
+ "hazardous_cargo": false,
+ "idle_on_sidewalk": false,
+ "devices_same_company": 2,
+ "has_permit": true
+}
