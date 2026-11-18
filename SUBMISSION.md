@@ -2,11 +2,11 @@
 
 ## Team card
 
-**Team name:** _(fill in)_
+**Team name:** Yield SF
 
 **Statement number:** _(fill in)_
 
-**First names:** Luke, _(add teammates)_
+**Team members:** Luke Kelleher, John Tran, Sravanthi Machcha, Madhav Rao, Devin Kearns
 
 **Statement:** How might we help **San Francisco residents who share narrow sidewalks with delivery robots, especially wheelchair users, people with strollers and older neighbors,** do **a quick check of a robot against the city's own rules** so that **a bad encounter becomes a report with the exact clause attached, sent to the agency that enforces it**? Build idea: **D**. We'll know it worked if **every checkable rule in Public Works Code §794 is a machine-readable test linked to its clause, and a failed test produces a report ready to file with SF311.**
 
