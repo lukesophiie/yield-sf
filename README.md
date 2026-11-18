@@ -1,5 +1,9 @@
 # Yield SF
 
+**Try the live app:** https://claude.ai/artifact/4pwVEUyRW6nshrtcTjHu1K?sk=2V0LpobLHhh_1hiP09wDIA
+
+[![Yield SF: a map of San Francisco showing robot-legal zones, high-injury streets, a robot watchlist and recent sightings](screenshot.png)](https://claude.ai/artifact/4pwVEUyRW6nshrtcTjHu1K?sk=2V0LpobLHhh_1hiP09wDIA)
+
 A Waze-style map for sidewalk delivery robots in San Francisco, built on SF Public Works Code §794 as 32 machine-readable rules. Track 3D, Claude Impact Lab SF.
 
 - `index.html`: the map. Tap where you saw a robot, pick what it did, get a clause-by-clause verdict and a 311 report. (Shared live sightings work on the published page; the local file keeps them on your device.)
