@@ -4,7 +4,7 @@
 <style>
 /* Layout: the map is the app. Floating rounded cards over it, one loud orange button, a sheet that slides between states. */
 :root{
-  --water:#b9e1f4; --land:#eef2ee; --park:#cbe7c4; --road:#ffffff; --road2:#d5dce4; --label:#6a7686;
+  --water:#b9e1f4; --land2:#e4e8dc; --land:#fcfdfb; --park:#cbe7c4; --road:#ffffff; --road2:#d5dce4; --label:#6a7686;
   --pdr:#19b86a; --hin:#ff6b4a;
   --card:#ffffff; --ink:#18223a; --dim:#5d6980; --line:#e1e6ee; --soft:#f2f5f9;
   --go:#ff6a1a; --go-ink:#ffffff; --ok:#0f9d58; --ok-bg:#dcf5e7; --bad:#e2343a; --bad-bg:#fde4e4; --warn:#b97a00; --warn-bg:#fff1cc; --link:#2057d6;
@@ -12,13 +12,13 @@
   --shadow:0 6px 24px rgba(20,30,60,.18);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --water:#0e2738; --land:#1b232d; --park:#1d3a2a; --road:#33404e; --road2:#27323e; --label:#93a0b3;
+  --water:#0e2738; --land2:#14202b; --land:#222c38; --park:#1d3a2a; --road:#33404e; --road2:#27323e; --label:#93a0b3;
   --pdr:#2bd683; --hin:#ff7d5f;
   --card:#1a2230; --ink:#eef2f8; --dim:#9daabd; --line:#2d3748; --soft:#232d3c;
   --go:#ff7a2e; --go-ink:#1a1206; --ok:#4fd695; --ok-bg:#143524; --bad:#ff7b7f; --bad-bg:#3d1a1c; --warn:#f3c552; --warn-bg:#3a2e0c; --link:#8db4ff;
   --shadow:0 6px 24px rgba(0,0,0,.5); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --water:#0e2738; --land:#1b232d; --park:#1d3a2a; --road:#33404e; --road2:#27323e; --label:#93a0b3;
+  --water:#0e2738; --land2:#14202b; --land:#222c38; --park:#1d3a2a; --road:#33404e; --road2:#27323e; --label:#93a0b3;
   --pdr:#2bd683; --hin:#ff7d5f;
   --card:#1a2230; --ink:#eef2f8; --dim:#9daabd; --line:#2d3748; --soft:#232d3c;
   --go:#ff7a2e; --go-ink:#1a1206; --ok:#4fd695; --ok-bg:#143524; --bad:#ff7b7f; --bad-bg:#3d1a1c; --warn:#f3c552; --warn-bg:#3a2e0c; --link:#8db4ff;
@@ -175,6 +175,8 @@ const D = {"source": "San Francisco Public Works Code Sec. 794, Autonomous Deliv
 const URL0 = D.source_url;
 /* ---------- map data: hand-drawn, approximate ---------- */
 const LAND=[[37,973],[30,700],[28,470],[22,330],[30,235],[75,205],[150,195],[240,165],[262,110],[285,42],[330,62],[420,82],[510,84],[580,80],[630,70],[690,68],[750,52],[800,44],[862,80],[895,130],[912,177],[950,232],[962,300],[958,340],[975,352],[968,410],[990,440],[1006,500],[990,560],[984,600],[925,612],[925,624],[990,628],[1030,650],[1072,680],[1100,720],[1150,750],[1188,800],[1150,850],[1120,885],[1060,900],[1045,940],[1027,966],[1010,973]];
+const CTX=[[[-900,-1200],[-900,-60],[-112,0],[60,-50],[277,-100],[330,-170],[300,-300],[380,-420],[430,-600],[520,-1200]],[[1560,-1200],[1500,-455],[1600,-227],[1350,91],[1387,273],[1612,500],[1900,700],[2200,1000],[2400,2600],[3600,2600],[3600,-1200]],[[37,973],[1010,973],[1040,1040],[990,1150],[1012,1318],[1060,1370],[1040,1500],[1130,1772],[1300,2600],[150,2600],[112,1954],[100,1318]]];
+const CTXL=[["Marin Headlands",-60,-200],["Sausalito",230,-420],["Angel Island",637,-405],["Treasure Island",1087,-140],["Oakland",1700,160],["Berkeley",1760,-420],["Alameda",1560,400],["Daly City",380,1090],["South San Francisco",640,1330],["Pacific Ocean",-330,520],["San Francisco Bay",1330,640]];
 const PARKS=[[[30,364],[465,364],[465,450],[30,450]],[[465,375],[540,375],[540,388],[465,388]],[[245,165],[262,110],[285,50],[330,65],[420,85],[505,88],[505,200],[400,215],[300,205]],[[660,850],[730,835],[770,880],[730,925],[670,910]],[[470,540],[535,535],[545,600],[480,605]]];
 const ROADS=[[[300,450],[300,973]],[[505,130],[694,137]],[[600,609],[975,609]],[[30,520],[480,520]],[[30,640],[470,640]],[[150,205],[150,364]],[[400,215],[400,364]],[[560,84],[560,364]],[[800,60],[800,215]],[[694,200],[895,200]],[[540,388],[540,476]],[[700,395],[800,430],[830,520],[820,640],[850,760],[880,940]],[[600,700],[900,700]],[[420,760],[860,800]]];
 const HIN=[{n:"Market St",p:[[910,177],[600,476],[540,540]]},{n:"Mission St",p:[[925,200],[716,377],[720,455],[716,609],[667,727],[600,845],[525,973]]},{n:"Van Ness Ave",p:[[694,75],[694,372],[712,380],[705,609]]},{n:"Geary Blvd",p:[[60,305],[700,262],[836,247]]},{n:"3rd St",p:[[836,247],[919,355],[945,455],[945,609],[934,727],[904,845],[866,945]]},{n:"16th St",p:[[600,455],[975,455]]},{n:"6th St",p:[[805,275],[868,335]]}];
@@ -263,7 +265,10 @@ const pts=p=>p.map(q=>q.join(",")).join(" ");
 function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent&&parent.appendChild(e);return e}
 (function draw(){
   const b=$("#base");
-  el("polygon",{points:pts(LAND),fill:"var(--land)",stroke:"var(--road2)","stroke-width":2,"stroke-linejoin":"round"},b);
+  CTX.forEach(p=>el("polygon",{points:pts(p),fill:"var(--land2)",stroke:"var(--road2)","stroke-width":2,"stroke-linejoin":"round"},b));
+  [[637,-409,70,55],[690,-106,14,10],[1087,-73,38,52],[1117,45,28,24]].forEach(e=>el("ellipse",{cx:e[0],cy:e[1],rx:e[2],ry:e[3],fill:"var(--land2)"},b));
+  [[[285,42],[277,-100]],[[952,236],[1117,45],[1350,91]],[[300,973],[300,1500]],[[866,945],[1000,1400],[1100,1900]]].forEach(p=>el("polyline",{points:pts(p),fill:"none",stroke:"var(--road2)","stroke-width":6,"stroke-linecap":"round","stroke-linejoin":"round"},b));
+  el("polygon",{points:pts(LAND),fill:"var(--land)",stroke:"var(--label)","stroke-width":3,"stroke-linejoin":"round"},b);
   PARKS.forEach(p=>el("polygon",{points:pts(p),fill:"var(--park)","stroke-linejoin":"round",stroke:"var(--park)","stroke-width":6},b));
   el("ellipse",{cx:150,cy:860,rx:55,ry:36,fill:"var(--water)"},b);
   ROADS.forEach(p=>el("polyline",{points:pts(p),fill:"none",stroke:"var(--road2)","stroke-width":5,"stroke-linecap":"round","stroke-linejoin":"round"},b));
@@ -271,6 +276,7 @@ function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const
   PDR.forEach(z=>el("polygon",{points:pts(z.p),fill:"url(#hatch)",stroke:"var(--pdr)","stroke-width":3,"stroke-linejoin":"round"},$("#zones")));
   HIN.forEach(h=>el("polyline",{points:pts(h.p),fill:"none",stroke:"var(--hin)","stroke-width":4,"stroke-dasharray":"2 9","stroke-linecap":"round"},$("#hin")));
   HOODS.forEach(h=>{const t=el("text",{x:h[1],y:h[2],class:"lbl"},$("#labels"));t.textContent=h[0]});
+  CTXL.forEach(h=>{const t=el("text",{x:h[1],y:h[2],class:"lbl",opacity:.6,"font-style":"italic"},$("#labels"));t.textContent=h[0]});
 })();
 const V={x:-30,y:-30,w:1260};
 function size(){return svg.getBoundingClientRect()}
@@ -282,8 +288,8 @@ function applyView(){
 }
 function fit(){
   const r=size(),a=r.width/r.height;
-  if(r.width<=820){V.w=760;V.x=860-V.w/2;V.y=500-(V.w/a)*0.36}
-  else{V.w=Math.max(1330,1080*a);const pad=(r.width>820?410:0)*V.w/r.width;V.x=600-(V.w+pad)/2;V.y=500-(V.w/a)/2}
+  if(r.width<=820){V.w=900;V.x=860-V.w/2;V.y=500-(V.w/a)*0.36}
+  else{V.w=Math.max(1330,1080*a)*1.32;const pad=(r.width>820?410:0)*V.w/r.width;V.x=600-(V.w+pad)/2;V.y=500-(V.w/a)/2}
   applyView();
 }
 function zoom(f,cx,cy){const r=size(),h=V.w/r.width*r.height;cx??=V.x+V.w/2;cy??=V.y+h/2;const w=Math.max(160,Math.min(2600,V.w*f)),g=w/V.w;V.x=cx-(cx-V.x)*g;V.y=cy-(cy-V.y)*g;V.w=w;applyView()}
@@ -296,7 +302,7 @@ svg.addEventListener("pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p)retur
 function up(e){const had=ptrs.delete(e.pointerId);pinch=0;if(!had||moved>8||e.type!=="pointerup")return;
   const pin=e.target.closest&&e.target.closest(".pin");
   if(pin&&pin.dataset.id!=="draft"){S.sel=pin.dataset.id;S.mode="card";S.draft=null;render();return}
-  const[x,y]=toMap(e);startDraft(x,y)}
+  const[x,y]=toMap(e);if(!inPoly(x,y,LAND)){toast("Yield covers San Francisco only. Tap inside the city.",1);return}startDraft(x,y)}
 svg.addEventListener("pointerup",up);svg.addEventListener("pointercancel",up);
 svg.addEventListener("wheel",e=>{e.preventDefault();const m=toMap(e);zoom(e.deltaY>0?1.15:.87,m[0],m[1])},{passive:false});
 $("#zin").onclick=()=>zoom(.7);$("#zout").onclick=()=>zoom(1.4);
@@ -361,7 +367,7 @@ function locBlock(L){
 }
 function sheetPick(){
   const d=S.draft,{L,v}=violations(d);
-  return `<div class="head"><div><h3>${esc(L.hood)}${L.onLand?"":" (that looks like water)"}</h3><h2>What did you see?</h2></div><button class="x" data-act="close" aria-label="Close" type="button">✕</button></div>
+  return `<div class="head"><div><h3>${esc(L.hood)}</h3><h2>What did you see?</h2></div><button class="x" data-act="close" aria-label="Close" type="button">✕</button></div>
   ${locBlock(L)}
   <div class="tiles">${TILES.map(t=>`<button class="tile" type="button" data-act="tile" data-id="${t.id}" aria-pressed="${d.tiles.includes(t.id)}"><span>${t.e}</span>${t.t}<small>§${t.c}</small></button>`).join("")}</div>
   <input class="note" id="note" maxlength="200" placeholder="Add a detail (optional)" value="${esc(d.note)}" aria-label="Detail">
@@ -398,7 +404,7 @@ function render(){
   const me=myStats();$("#stat").textContent=`${me.pts} pts`+(innerWidth>820?` · ${tier(me.trust)}`:"");$("#sheet").dataset.mode=S.mode;
   drawPins();
 }
-function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;$("#app").appendChild(e);setTimeout(()=>e.remove(),2300)}
+function toast(t,warn){const e=document.createElement("div");e.className="toast";if(warn){e.style.background="var(--ink)";e.style.fontSize="1rem"}e.textContent=t;$("#app").appendChild(e);setTimeout(()=>e.remove(),2300)}
 function save(){try{localStorage.setItem("yield.reports",JSON.stringify(mine))}catch(e){}}
 let dbRef=null;
 async function send(){
