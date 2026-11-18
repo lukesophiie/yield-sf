@@ -124,10 +124,11 @@ details ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
 .toast{position:absolute;left:50%;top:40%;background:var(--ok);color:var(--card);font:900 1.3rem var(--font);border-radius:99px;padding:12px 22px;box-shadow:var(--shadow);pointer-events:none;white-space:nowrap}
 
 .modal{position:absolute;inset:0;background:rgba(10,16,30,.55);display:grid;place-items:center;padding:16px;z-index:5}
-.mcard{background:var(--card);border-radius:24px;box-shadow:var(--shadow);width:min(1240px,100%);max-height:100%;overflow:auto;padding:22px;display:grid;gap:16px}
+.mcard{background:var(--card);border-radius:24px;box-shadow:var(--shadow);width:min(1400px,100%);max-height:100%;overflow:auto;padding:22px;display:grid;gap:16px}
 .mcard h2{font-size:1.7rem}
-.cols3{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-@media (max-width:1100px){.cols3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cols3{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:1350px){.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:900px){.cols3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.cols3{grid-template-columns:minmax(0,1fr)}}
 .col{background:var(--soft);border-radius:18px;padding:14px;display:grid;gap:10px;align-content:start}
 .col h3{color:var(--ink);font-size:.82rem}
@@ -137,6 +138,7 @@ details ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
 .step i{width:34px;height:34px;border-radius:50%;background:var(--go);color:var(--go-ink);display:grid;place-items:center;font:900 1rem var(--font);font-style:normal}
 .step b,.col li b{font-weight:900}
 .pts{font:500 .72rem var(--mono);color:var(--ok)} .pts.neg{color:var(--bad)}
+.pips i{display:inline-block;width:20px;height:8px;border-radius:4px;margin-right:3px}
 .vote[aria-pressed="true"]{border-color:var(--ink);background:var(--soft)}
 .live{font:800 .72rem var(--font);color:var(--dim);display:flex;gap:6px;align-items:center}
 .live i{width:8px;height:8px;border-radius:50%;background:var(--warn)}
@@ -164,6 +166,7 @@ details ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
   <div class="chips">
     <button class="chip" id="lyPdr" aria-pressed="true" type="button"><i style="background:var(--pdr)"></i>Robot-legal zones</button>
     <button class="chip" id="lyHin" aria-pressed="true" type="button"><i style="background:var(--hin)"></i>High-injury streets</button>
+    <button class="chip" id="geo" type="button"></button>
     <button class="chip" id="how" type="button" style="background:var(--ink);color:var(--card)">How it works</button>
     <span class="chip stat" id="stat"></span>
   </div>
@@ -227,10 +230,12 @@ function violations(r){
 }
 /* ---------- state ---------- */
 const DEMO=[
- {id:"d1",demo:1,by:"da",x:688,y:500,tiles:["speed","nohuman","noyield"],note:"Came up behind me faster than I walk, nobody with it.",t:Date.now()-36e5},
+ {id:"d1",demo:1,by:"da",rid:"KX-07",x:688,y:500,tiles:["speed","nohuman","noyield"],note:"Came up behind me faster than I walk, nobody with it.",t:Date.now()-36e5},
  {id:"d2",demo:1,by:"db",x:952,y:518,tiles:["noid"],note:"No markings, rolling along 3rd St.",t:Date.now()-72e5},
- {id:"d3",demo:1,by:"da",x:967,y:673,tiles:[],note:"Slow, operator walking beside it, ID plate visible.",t:Date.now()-108e5},
- {id:"d4",demo:1,by:"dz",x:205,y:640,tiles:["many","cargo","speed","signal"],note:"Ten robots racing with fireworks on board!!",t:Date.now()-150e5}
+ {id:"d3",demo:1,by:"da",rid:"KX-02",x:967,y:673,tiles:[],note:"Slow, operator walking beside it, ID plate visible.",t:Date.now()-108e5},
+ {id:"d4",demo:1,by:"dz",rid:"ZZ-99",x:205,y:640,tiles:["many","cargo","speed","signal"],note:"Ten robots racing with fireworks on board!!",t:Date.now()-150e5},
+ {id:"d5",demo:1,by:"dc",rid:"KX-07",x:640,y:330,tiles:["nohuman"],note:"Rolling alone, nobody within a block.",t:Date.now()-200e5},
+ {id:"d6",demo:1,by:"dd",rid:"KX-07",x:735,y:565,tiles:["blocked","noyield"],note:"Stopped across the curb ramp, a wheelchair user had to go around.",t:Date.now()-18e5}
 ];
 let mine=[];try{mine=JSON.parse(localStorage.getItem("yield.reports")||"[]")}catch(e){}
 let shared=[], live=false, canShare=true;
@@ -241,7 +246,7 @@ const cite=c=>`<a class="cite" href="${URL0}" target="_blank" rel="noopener">§$
 function all(){const ids=new Set(mine.map(r=>r.id));return [...DEMO,...shared.filter(r=>!ids.has(r.id)),...mine.map(r=>({...r,by:ME}))]}
 /* ---------- community feedback loop: scores are recomputed from the public record ---------- */
 const SEED={dv1:2.5,dv2:2.5,dv3:1};
-const DEMOV={d1:{dv1:1,dv2:1,dv3:1},d2:{dv1:1},d3:{dv2:1,dv3:1},d4:{dv1:-1,dv2:-1}};
+const DEMOV={d1:{dv1:1,dv2:1,dv3:1},d2:{dv1:1},d3:{dv2:1,dv3:1},d4:{dv1:-1,dv2:-1},d5:{dv1:1,dv2:1},d6:{dv1:1}};
 let ME="me-local",myVotes={},remoteVotes={},SC=null;
 try{myVotes=JSON.parse(localStorage.getItem("yield.votes")||"{}")}catch(e){}
 const wOf=t=>t>=4?1.5:t>=2?1:.5;
@@ -267,6 +272,18 @@ function score(){
   }
   return out;
 }
+/* ---------- deterministic guardrails: fixed thresholds, no judgement ---------- */
+let FL={};
+function fleet(){const m={};for(const r of all()){if(!r.rid)continue;const s=SC.st[r.id];if(!s||s.s!=="verified"||Date.now()-r.t>30*864e5||!violations(r).v.length)continue;const f=m[r.rid]??={rid:r.rid,n:0,by:new Set()};f.n++;f.by.add(r.by)}
+  for(const k in m){const f=m[k];f.level=f.n>=3&&f.by.size>=3?"recall":f.n>=2?"warning":"watch"}return m}
+const GEO={mode:"sim",far:false,pos:null,asked:false};
+function askGeo(){if(GEO.asked||!navigator.geolocation)return;GEO.asked=true;try{navigator.geolocation.getCurrentPosition(p=>{GEO.mode="gps";GEO.pos=[(p.coords.longitude+122.515)*7500,(37.815-p.coords.latitude)*9090.9];render()},()=>{},{enableHighAccuracy:true,timeout:8000})}catch(e){}}
+function geoOK(x,y){
+  if(GEO.mode==="gps"){const[px,py]=GEO.pos;if(!inPoly(px,py,LAND))return{ok:false,msg:"You're outside San Francisco. Yield only takes sightings from people in the city."};
+    const m=Math.round(Math.hypot(px-x,py-y)*12);return m<=250?{ok:true,msg:`GPS: you're about ${m} m from this spot`,geo:"gps"}:{ok:false,msg:`You're ${(m/1000).toFixed(1)} km away. You must be within 250 m to report or review.`}}
+  return GEO.far?{ok:false,msg:"Demo location: you're 4.2 km away. You must be within 250 m to report or review."}:{ok:true,msg:"Location simulated. This preview can't read GPS.",geo:"sim"}}
+function robotBlock(rid){const f=FL[rid]||{n:0,level:"clear"},pips=[0,1,2].map(i=>`<i style="background:${i<f.n?"var(--bad)":"var(--line)"}"></i>`).join("");
+  return `<div class="chk ${f.level==="recall"?"bad":f.level==="warning"?"unk":"ok"}"><span>🤖</span><span><b>Robot ${esc(rid)}: ${f.level==="recall"?"RECALLED. It must return to its dock until inspected.":f.level==="warning"?"warning, one strike from recall":f.level==="watch"?"on the watchlist":"no strikes"}</b><br><span class="pips">${pips}</span>${Math.min(f.n,3)} of 3 verified strikes in 30 days</span></div>`}
 function myStats(){const a=SC.agg[ME]||{v:0,x:0,a:0};return {pts:Math.max(0,10*a.v-10*a.x+2*a.a),trust:trustOf(ME)}}
 const STLBL={verified:"verified",disputed:"disputed",open:"unverified"};
 const ago=t=>{const m=Math.max(1,Math.round((Date.now()-t)/6e4));return m<60?m+" min ago":Math.round(m/60)+" hr ago"};
@@ -348,7 +365,7 @@ function drawPins(){
   applyView();
 }
 /* ---------- flow ---------- */
-function startDraft(x,y){S.draft={x,y,tiles:[],note:""};S.sel=null;S.mode="pick";render()}
+function startDraft(x,y){askGeo();S.draft={x,y,tiles:[],note:"",rid:""};S.sel=null;S.mode="pick";render()}
 function reportText(r){
   const{L,v}=violations(r);
   if(S.asData)return JSON.stringify({reported_at:new Date(r.t).toISOString(),map_x:Math.round(r.x),map_y:Math.round(r.y),neighborhood:L.hood,pdr_zone:L.zone,high_injury_street:L.hin,observed:r.tiles,note:r.note,violations:v.map(z=>"SF PWC §"+z.c)},null,1);
@@ -370,6 +387,7 @@ function sheetIdle(){
     <div><span class="sw" style="background:var(--pdr);opacity:.7"></span>Robot-legal zone (PDR zoning) ${cite("794(i)(4)(A)")}</div>
     <div><span class="sw" style="background:repeating-linear-gradient(90deg,var(--hin) 0 4px,transparent 4px 9px)"></span>High-injury street, never legal ${cite("794(i)(4)(B)")}</div>
   </div>
+  ${Object.keys(FL).length?`<h3>Robot watchlist</h3><div class="feed">${Object.values(FL).sort((a,b)=>b.n-a.n).map(f=>`<div class="item" style="cursor:default"><span class="n" style="background:${f.level==="recall"?"var(--bad)":f.level==="warning"?"var(--warn)":"var(--dim)"}">${f.n}</span><span><b>Robot ${esc(f.rid)}</b>${f.level==="recall"?"Recalled: must return to dock":f.level==="warning"?"Warning: one strike from recall":"On watch"} · ${f.n} verified in 30 days</span></div>`).join("")}</div>`:""}
   <h3>Latest sightings</h3>
   <div class="feed">${list.map(r=>{const{L,v}=violations(r);return `<button class="item" data-act="open" data-id="${esc(r.id)}" type="button"><span class="n" style="background:${v.length?"var(--bad)":"var(--ok)"}">${v.length}</span><span><b>${esc(L.hood)}${r.demo?'<span class="tag">demo</span>':""}<span class="tag" style="background:var(--soft);color:var(--dim)">${STLBL[SC.st[r.id].s]}</span></b>${v.length?esc(v.slice(0,2).map(z=>z.t).join(", "))+(v.length>2?" +"+(v.length-2):""):"Looks allowed"} · ${ago(r.t)}</span></button>`}).join("")}</div>
   <div class="live ${live?"on":""}"><i></i>${live?"Live: sightings are shared with everyone who can contribute to this page":"Sightings you add are saved on this device"}</div>
@@ -380,6 +398,7 @@ function sheetIdle(){
     <li>Whether an operator holds a current permit. Only Public Works can confirm that.</li>
     <li>How often robots really break the rules. Operators report incidents to the City monthly under §794(h)(2)(C), and none of it is published.</li>
     <li>Pins and reviews marked demo are examples we wrote, not real sightings.</li>
+    <li>Where you really are, in this preview. It cannot read GPS, so the location check is simulated; the standalone page uses your device location, which can still be spoofed.</li>
     <li>Whether two accounts are one person. Half-weight reviews for new accounts slow that down but do not stop it.</li></ul></details>`;
 }
 function locBlock(L){
@@ -389,12 +408,14 @@ function locBlock(L){
   </div>`;
 }
 function sheetPick(){
-  const d=S.draft,{L,v}=violations(d);
+  const d=S.draft,{L,v}=violations(d),gk=geoOK(d.x,d.y);
   return `<div class="head"><div><h3>${esc(L.hood)}</h3><h2>What did you see?</h2></div><button class="x" data-act="close" aria-label="Close" type="button">✕</button></div>
   ${locBlock(L)}
+  <div class="chk ${gk.ok?"ok":"bad"}"><span>📍</span><span><b>${gk.ok?"You are on site.":"You are not on site."}</b> ${esc(gk.msg)}</span></div>
   <div class="tiles">${TILES.map(t=>`<button class="tile" type="button" data-act="tile" data-id="${t.id}" aria-pressed="${d.tiles.includes(t.id)}"><span>${t.e}</span>${t.t}<small>§${t.c}</small></button>`).join("")}</div>
+  <input class="note" id="rid" maxlength="12" placeholder="Robot ID printed on it (if any)" value="${esc(d.rid)}" aria-label="Robot ID">
   <input class="note" id="note" maxlength="200" placeholder="Add a detail (optional)" value="${esc(d.note)}" aria-label="Detail">
-  <button class="big" data-act="send" type="button">${v.length?`Report ${v.length} broken rule${v.length>1?"s":""}`:"Log it as allowed"}</button>
+  <button class="big" data-act="send" type="button" ${gk.ok?"":"disabled"}>${v.length?`Report ${v.length} broken rule${v.length>1?"s":""}`:"Log it as allowed"}</button>
   <p class="dim">Map checks are approximate. Nothing is sent to the City from here.</p>`;
 }
 function sheetCard(){
@@ -403,6 +424,7 @@ function sheetCard(){
   return `<div class="head"><div><h3>${esc(L.hood)} · ${ago(r.t)}${r.demo?'<span class="tag">demo</span>':""}</h3></div><button class="x" data-act="close" aria-label="Close" type="button">✕</button></div>
   <div class="verdict ${v.length?"bad":"ok"}">${v.length?`Not allowed. ${v.length} rule${v.length>1?"s":""} broken.`:"Looks allowed here."}<small>${v.length?`Each can draw a citation of up to $1,000 a day (§794(k)(3))`:"No violations observed. Permit status still needs checking."}</small></div>
   ${(()=>{const s=SC.st[r.id];return s.s==="verified"?`<div class="chk ok"><span>✅</span><span><b>Community verified.</b> ${s.nc} neighbors confirmed it. Reporter: ${tier(trustOf(r.by))}.</span></div>`:s.s==="disputed"?`<div class="chk bad"><span>🚫</span><span><b>Disputed.</b> ${s.nx} neighbors say it doesn't look right. It no longer counts, and the reporter lost 10 points.</span></div>`:`<div class="chk unk"><span>⏳</span><span><b>Unverified.</b> Needs 2 or more neighbors to confirm (${s.nc} so far). Reporter: ${tier(trustOf(r.by))}.</span></div>`})()}
+  ${r.rid?robotBlock(r.rid):""}
   ${r.by===ME?`<p class="dim">You can't review your own sighting. It earns points only if neighbors confirm it.</p>`:`<div class="row"><button class="btn vote" data-act="vote" data-v="1" aria-pressed="${myVotes[r.id]===1}" type="button">👍 I saw it too</button><button class="btn vote" data-act="vote" data-v="-1" aria-pressed="${myVotes[r.id]===-1}" type="button">👎 Doesn't look right</button></div>`}
   ${r.note?`<p>“${esc(r.note)}”</p>`:""}
   ${v.length?`<ul class="v">${v.map(z=>`<li><span>${cite(z.c)} <b>${esc(z.t)}</b></span><span class="dim">${esc(z.r)}${z.map?" (by this approximate map)":""}</span></li>`).join("")}</ul>`:""}
@@ -418,7 +440,8 @@ function sheetRules(){
   <h3>Penalties</h3><div>${D.penalties.map(p=>`<div class="rule"><span>${cite(p.clause)}</span><span class="dim">${esc(p.text)}</span></div>`).join("")}</div>`;
 }
 function render(){
-  SC=score();
+  SC=score();FL=fleet();
+  $("#geo").textContent=GEO.mode==="gps"?"📍 GPS on":GEO.far?"📍 Demo: across town":"📍 Demo: on-site";
   $("#sheet").hidden=S.mode==="placing"&&innerWidth<=820;
   $("#sheet").innerHTML=S.mode==="pick"?sheetPick():S.mode==="card"?sheetCard():S.mode==="rules"?sheetRules():sheetIdle();
   $("#sheet").scrollTop=0;
@@ -431,23 +454,24 @@ function toast(t,warn){const e=document.createElement("div");e.className="toast"
 function save(){try{localStorage.setItem("yield.reports",JSON.stringify(mine))}catch(e){}}
 let dbRef=null;
 async function send(){
-  const d=S.draft,r={id:"r"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),x:Math.round(d.x),y:Math.round(d.y),tiles:d.tiles.slice(),note:d.note.trim().slice(0,200),t:Date.now()};
+  const d=S.draft,gk=geoOK(d.x,d.y);if(!gk.ok){toast(gk.msg,1);return}
+  const r={rid:(d.rid||"").toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,12),geo:gk.geo,id:"r"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),x:Math.round(d.x),y:Math.round(d.y),tiles:d.tiles.slice(),note:d.note.trim().slice(0,200),t:Date.now()};
   mine.push(r);save();S.draft=null;S.sel=r.id;S.newId=r.id;S.mode="card";render();
   toast("Logged. Points come when neighbors confirm it.");
-  if(dbRef&&canShare){try{await dbRef.doc(r.id).set({x:r.x,y:r.y,tiles:r.tiles,note:r.note,t:r.t,by:ME})}catch(e){canShare=false}}
+  if(dbRef&&canShare){try{await dbRef.doc(r.id).set({x:r.x,y:r.y,tiles:r.tiles,note:r.note,t:r.t,by:ME,rid:r.rid,geo:r.geo})}catch(e){canShare=false}}
 }
 $("#sheet").addEventListener("click",e=>{
   const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
   if(a==="place"){S.mode="placing";S.draft=null;S.sel=null;render()}
   else if(a==="close"){S.mode="idle";S.draft=null;S.sel=null;render()}
-  else if(a==="tile"){const t=S.draft.tiles,i=t.indexOf(b.dataset.id);i<0?t.push(b.dataset.id):t.splice(i,1);S.draft.note=$("#note").value;const top=$("#sheet").scrollTop;render();$("#sheet").scrollTop=top}
-  else if(a==="send"){S.draft.note=$("#note").value;send()}
+  else if(a==="tile"){const t=S.draft.tiles,i=t.indexOf(b.dataset.id);i<0?t.push(b.dataset.id):t.splice(i,1);S.draft.note=$("#note").value;S.draft.rid=$("#rid").value;const top=$("#sheet").scrollTop;render();$("#sheet").scrollTop=top}
+  else if(a==="send"){S.draft.note=$("#note").value;S.draft.rid=$("#rid").value;send()}
   else if(a==="open"){S.sel=b.dataset.id;S.mode="card";render()}
   else if(a==="rules"){S.mode="rules";render()}
   else if(a==="fmt"){S.asData=!S.asData;render()}
   else if(a==="how"){showHow()}
-  else if(a==="vote"){const id=S.sel,v=+b.dataset.v,was=SC.st[id]?.s;if(myVotes[id]===v)delete myVotes[id];else myVotes[id]=v;try{localStorage.setItem("yield.votes",JSON.stringify(myVotes))}catch(e){}
-    render();const now=SC.st[id]?.s;if(now!==was&&now!=="open")toast(now==="verified"?"Community verified ✓":"Marked as disputed");pushVotes()}
+  else if(a==="vote"){const id=S.sel,v=+b.dataset.v,was=SC.st[id]?.s,rr=all().find(z=>z.id===id),lv=FL[rr.rid]?.level,gk=geoOK(rr.x,rr.y);if(!gk.ok){toast(gk.msg,1);return}if(myVotes[id]===v)delete myVotes[id];else myVotes[id]=v;try{localStorage.setItem("yield.votes",JSON.stringify(myVotes))}catch(e){}
+    render();const now=SC.st[id]?.s;if(FL[rr.rid]?.level==="recall"&&lv!=="recall")toast("Recall triggered: "+rr.rid+" must return to its dock",1);else if(now!==was&&now!=="open")toast(now==="verified"?"Community verified ✓":"Marked as disputed");pushVotes()}
   else if(a==="copy"){const t=$("#out").textContent;navigator.clipboard.writeText(t).then(()=>{$("#msg").textContent="Copied. Paste it into SF311."}).catch(()=>{const g=document.createRange();g.selectNodeContents($("#out"));const s=getSelection();s.removeAllRanges();s.addRange(g);$("#msg").textContent="Selected. Press Ctrl or Cmd+C to copy."})}
 });
 $("#fab").onclick=()=>{S.mode="placing";S.draft=null;S.sel=null;render()};
@@ -458,6 +482,7 @@ const LAW=[["Permit first","No Public Works testing permit, no robot on the side
 const LOOP=[["Report","Tap the map and pick what you saw.","0 pts for posting"],["Review","Neighbors confirm or dispute it. Nobody reviews their own.","reviews from new accounts count half"],["Reward","Confirmed by 2 or more neighbors: the reporter earns points, and so does everyone who reviewed it correctly.","+10 reporter, +2 reviewer"],["Trust","Trust rises with confirmed work and makes your reviews count more. Disputed reports cost you.","-10 pts and -1 trust if disputed"]];
 const FAIR=["Posting earns nothing. Only confirmation by other people does.","A confirmed \"looks allowed\" pays the same as a confirmed violation, so there is no bounty for accusing.","You can't review your own sighting, and you get one review per sighting.","A sighting needs 2 or more confirmers and enough combined trust (1.5) to count.","New accounts' reviews count 0.5, trusted 1, guardians 1.5.","Only your first 5 sightings a day can earn points.","Points are reputation only. There is nothing to cash out, so nothing to farm.","Scores are recomputed in the open from the public record, so anyone can audit them."];
 const FUND=[["Operators pay in","Every permitted operator pays the same flat fee per robot each month. Example: $250 a robot, so at most $2,250 a month with the 9-robot cap."],["Paying buys nothing","The fee is the same whether an operator is reported or not, and gives no say over sightings, reviews or scores."],["What it pays for","Running and improving this map, accessibility audits by disability groups in robot zones, and publishing incident data openly."],["Never paid per report","Neighbors are not paid for sightings, so the fair-play rules still hold. Trusted neighbors vote on small neighborhood grants."],["Open ledger","Every dollar in and out is listed publicly, next to the map."]];
+const GUARD=[["Geofence","You can only report or review within 250 m of the spot, and only inside San Francisco."],["Strike 1: watch","One community-verified violation puts that robot ID on the watchlist."],["Strike 2: warning","Two within 30 days and the operator is warned."],["Strike 3: recall","Three within 30 days, from three different reporters, and the robot must return to its dock until inspected."],["Same input, same outcome","Fixed thresholds, no scoring model, no moderator. Unverified and disputed sightings never count."]];
 function showHow(){
   $("#modal").hidden=false;
   $("#modal").innerHTML=`<div class="mcard" role="dialog" aria-label="How Yield works"><div class="head"><div><h3>For the room</h3><h2>How Yield works</h2></div><button class="x" data-close type="button" aria-label="Close">✕</button></div>
@@ -466,10 +491,12 @@ function showHow(){
    <div class="col"><h3>2 · The feedback loop</h3>${LOOP.map((l,i)=>`<div class="step"><i>${i+1}</i><div><b>${l[0]}</b><br>${l[1]}<br><span class="pts ${i===3?"neg":""}">${l[2]}</span></div></div>`).join("")}<p class="dim">Like human-feedback training for AI, but for people: the community's reviews are the reward signal.</p></div>
    <div class="col"><h3>3 · Fair-play rules</h3><ul>${FAIR.map(f=>`<li>${f}</li>`).join("")}</ul></div>
    <div class="col"><h3>4 · The Sidewalk Fund <span class="tag">proposal</span></h3><ul>${FUND.map(l=>`<li><b>${l[0]}</b><span>${l[1]}</span></li>`).join("")}</ul><p class="dim">Not live: no money moves through this page and the fee is an example. It would need the City to adopt it, for instance as a permit condition under ${cite("794(h)(1)")}.</p></div>
+   <div class="col"><h3>5 · Hard guardrails</h3><ul>${GUARD.map(l=>`<li><b>${l[0]}</b><span>${l[1]}</span></li>`).join("")}</ul><p class="dim">Recall is a proposed rule. Yield cannot command a robot: the operator or Public Works would have to act on it (${cite("794(h)(1)")}).</p></div>
   </div>
   <p class="dim"><b>What it can't stop:</b> one person running several accounts, or a group agreeing to confirm each other. Half-weight reviews, the two-confirmer rule and the daily cap raise the cost but don't remove it. Verified means neighbors agree, not that the City has confirmed a violation. A fund paid by operators is a conflict of interest unless the flat fee and open ledger are enforced by someone independent.</p></div>`;
 }
 $("#how").onclick=showHow;
+$("#geo").onclick=()=>{if(GEO.mode==="gps")return;GEO.far=!GEO.far;render()};
 $("#modal").addEventListener("click",e=>{if(e.target.id==="modal"||e.target.closest("[data-close]"))$("#modal").hidden=true});
 fit();render();
 /* ---------- shared sightings (lights up when the viewer can use the store) ---------- */
@@ -480,7 +507,7 @@ fit();render();
     if(Object.keys(myVotes).length)pushVotes();render()}}catch(e){}
   dbRef=db.collection("reports");
   dbRef.orderBy("t","desc").limit(200).onSnapshot(s=>{
-    shared=s.docs.map(d=>{const v=d.data()||{};return {id:d.id,x:+v.x,y:+v.y,tiles:Array.isArray(v.tiles)?v.tiles.filter(t=>TMAP[t]).slice(0,12):[],note:typeof v.note==="string"?v.note.slice(0,200):"",t:+v.t||Date.now(),by:typeof v.by==="string"?v.by.slice(0,40):"anon"}}).filter(r=>r.x>-50&&r.x<1300&&r.y>-50&&r.y<1100);
+    shared=s.docs.map(d=>{const v=d.data()||{};return {id:d.id,x:+v.x,y:+v.y,tiles:Array.isArray(v.tiles)?v.tiles.filter(t=>TMAP[t]).slice(0,12):[],note:typeof v.note==="string"?v.note.slice(0,200):"",t:+v.t||Date.now(),by:typeof v.by==="string"?v.by.slice(0,40):"anon",rid:typeof v.rid==="string"?v.rid.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,12):"",geo:v.geo==="gps"?"gps":"sim"}}).filter(r=>r.x>-50&&r.x<1300&&r.y>-50&&r.y<1100);
     live=true;if(S.mode==="idle")render();else{SC=score();drawPins()}
   },()=>{live=false});
 })();

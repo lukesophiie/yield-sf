@@ -21,6 +21,8 @@ Run: `python3 check.py examples/resident_fail.json` (or open `index.html`; `pyth
 
 **The Sidewalk Fund (proposal, not live):** every permitted operator pays the same flat fee per robot per month into a fund with a public ledger. It pays for running the map, accessibility audits and open incident data, never for individual reports, and paying gives an operator no say over sightings or scores. No money moves through the page and the fee shown is an example; it would need the City to adopt it.
 
+**Hard guardrails (see `GUARDRAILS.md`):** you can only report or review within 250 m of the spot and only inside San Francisco, and a robot ID with three community-verified violations in 30 days from three different reporters is marked for recall to its dock. Fixed thresholds, no model, no moderator. The hosted preview simulates location because it cannot read GPS, and recall is a proposed rule that the operator or Public Works would have to act on.
+
 **3. Data we used:** `sf-sidewalk-robot-rules`: San Francisco Public Works Code Sec. 794, subsections (a) to (k), retrieved 2026-11-17. One legal text, 32 rules, 4 penalty provisions. The three files in `examples/` are illustrative observations we wrote, labeled as such, because no incident dataset exists.
 
 **4. What it found:** 32 distinct checkable rules, each linked to its clause (n = 1 code section, 11 subsections). 15 can be checked by a resident from the sidewalk; 19 by an operator (2 overlap). The code requires operators to report incidents and complaints to the City monthly (§794(h)(2)(C)), yet no public incident dataset exists, so the rules are checkable but compliance is not visible to the public.
